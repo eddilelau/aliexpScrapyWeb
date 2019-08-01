@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+
+
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>主页</title>
+    <link href="../static/css/style.default.css" rel="stylesheet">
+    <link href="../static/css/jquery.datatables.css" rel="stylesheet">
+</head>
+<body>
+<div id="preloader">
+    <div id="status"><i class="fa fa-spinner fa-spin"></i></div>
+</div>
+<section>
+
+    <div class="leftpanel">
+
+        <div class="logopanel">
+            <h1>
+                <span>[</span> 速卖通爬虫 <span>]</span>
+            </h1>
+
+        </div><!-- logopanel -->
+
+        <div class="leftpanelinner">
+
+
+            <!-- This is only visible to small devices -->
+            <div class="visible-xs hidden-sm hidden-md hidden-lg">
+                <div class="media userlogged">
+                    <img alt="" src="images/photos/loggeduser.png" class="media-object">
+                    <div class="media-body">
+                        <h4>John Doe</h4>
+                        <span>"Life is so..."</span>
+                    </div>
+                </div>
+
+                <h5 class="sidebartitle actitle">Account</h5>
+                <ul class="nav nav-pills nav-stacked nav-bracket mb30">
+                    <li><a href="profile.html"><i class="fa fa-user"></i> <span>Profile</span></a></li>
+                    <li><a href=""><i class="fa fa-cog"></i> <span>Account Settings</span></a></li>
+                    <li><a href=""><i class="fa fa-question-circle"></i> <span>Help</span></a></li>
+                    <li><a href="signout.html"><i class="fa fa-sign-out"></i> <span>Sign Out</span></a></li>
+                </ul>
+            </div>
+
+            <h5 class="sidebartitle"></h5>
+            <ul class="nav nav-pills nav-stacked nav-bracket">
+                <li class="active"><a href="/"><i class="fa fa-home"></i> <span>首页</span></a></li>
+                <li class="nav-parent"><a href=""><i class="fa fa-desktop"></i> <span>消费电子</span></a>
+                    <ul class="children">
+                        <!--<li><a href="/preCompetingsalesData/"><i class="fa fa-caret-right"></i> 飙升新品</a></li>-->
+                        <li><a href="/competingSales/" target="_blank"><i class="fa fa-caret-right"></i> 热卖产品</a></li>
+                        <li><a href="/monitoringProduct/" target="_blank"><i class="fa fa-caret-right"></i> 监控产品</a></li>
+                        <li><a href="/infringeProductInfo/" target="_blank"><i class="fa fa-caret-right"></i> 疑侵权产品</a></li>
+                        <!--<li><a href="/catalogAndTags/"><i class="fa fa-caret-right"></i> 类目与标签</a></li>-->
+                        <!--<li><a href="/competingProductList/"><i class="fa fa-caret-right"></i> 热卖产品列表</a></li>-->
+                    </ul>
+                </li>
+                <li class=""><a href=""><i class="fa fa-cutlery"></i> <span>厨房工具</span></a>
+                </li>
+                <li class=""><a href=""><i class="fa fa-suitcase"></i> <span>箱包</span></a>
+                </li>
+                <li class=""><a href=""><i class="fa fa-life-bouy"></i> <span>户外用品</span></a>
+                </li>
+                <li class=""><a href=""><i class="fa fa-heart"></i> <span>个人护理用品</span></a>
+                </li>
+                <li class=""><a href=""><i class="fa fa-taxi"></i> <span>汽车配件</span></a>
+                </li>
+                <li class=""><a href=""><i class="fa fa-wrench"></i> <span>家具改装工具</span></a>
+                </li>
+                <li class="nav-parent"><a href="layouts.html"><i class="fa fa-cogs"></i> <span>其他</span></a>
+                    <ul class="children">
+                        <li><a href="layouts.html" target="_blank"><i class="fa fa-caret-right"></i> 界面设置</a></li>
+                        <li><a href="/readMe" target="_blank"><i class="fa fa-caret-right"></i> 版本信息</a></li>
+                        <li><a href="/infringementInfo" target="_blank"><i class="fa fa-caret-right"></i> 专利资讯</a></li>
+                    </ul>
+                </li>
+
+            </ul>
+
+
+        </div><!-- leftpanelinner -->
+    </div><!-- leftpanel -->
+
+    <div class="mainpanel">
+
+        <div class="headerbar">
+
+            <a class="menutoggle"><i class="fa fa-bars"></i></a>
+
+        </div><!-- headerbar -->
+
+        {% block content %}
+        {% endblock %}
+
+
+    </div><!-- mainpanel -->
+
+</section>
+
+
+<script src="../static/js/jquery-1.11.1.min.js"></script>
+<script src="../static/js/jquery-migrate-1.2.1.min.js"></script>
+<script src="../static/js/bootstrap.min.js"></script>
+<script src="../static/js/modernizr.min.js"></script>
+<script src="../static/js/jquery.sparkline.min.js"></script>
+<script src="../static/js/toggles.min.js"></script>
+<script src="../static/js/retina.min.js"></script>
+<script src="../static/js/jquery.cookies.js"></script>
+<script src="../static/js/jquery.datatables.min.js"></script>
+<script src="../static/js/select2.min.js"></script>
+<script src="../static/js/custom.js"></script>
+
+</body>
+</html>
+
+

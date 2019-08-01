@@ -1,0 +1,468 @@
+{% extends 'base.html' %}
+{% block content %}
+
+{% load set_val %}
+{% load pagetag %}
+<script type="text/javascript">
+    // 编辑表单
+    function checkProductId(productId) {
+        if (!productId) {
+            alert('Error！');
+            return false;
+        }
+        // var form_data = new Array();
+
+        $.ajax(
+            {
+                url: "/checkProductId",
+                data: {"productId": productId},
+                type: "post",
+                beforeSend: function () {
+                    return true;
+                },
+                success: function (data) {
+                    if (data) {
+                        // 解析json数据
+                        data = JSON.parse(data);
+                        // 赋值;
+                        var id = data["productId"];
+                        var catalogs = data["catalogs"];
+                        var dir = "{{ STATIC_URL }}" + id + ".jpg";
+                        var html = "<option value=''>-请选择标签-</option>";
+                        $("#productId").val(id);
+                        $("#act").val("edit");
+                        // 将元素设置为readonly
+                        $('#productId').attr("readonly", "readonly")
+                        $("#act").val("add");
+                        $("#img_id").attr("src", dir);
+                        for (var i = 0; i < catalogs.length; i++) {
+                            html += "<option value=\"" + catalogs[i] + "\">" + catalogs[i] + "</option> ";
+                        }
+                        $('#catalogID').html(html)
+
+                        //修改文本框的属性为disabled,不能在页面上更改文本框内容
+                        // {#$('#productId').attr("disabled", true)#}
+                        // location.reload();
+                    } else {
+                        alert('操作失败');
+                    }
+                },
+                error: function () {
+                    alert('请求出错');
+                },
+                complete: function () {
+                }
+            });
+
+        return false;
+    }
+
+    //加载类目标签
+    function reloadTags(ths) {
+        var catalog = $(ths).val();
+        // alert(catalog);
+        if (!catalog){
+            alert("获取不了类目名称");
+            return false;
+        }
+
+        $.ajax({
+                url:'/reloadTags',
+                type:'post',
+                data:{"catalog":catalog},
+                beforeSend:function () {
+                    return true
+                },
+                success:function (data) {
+                    if(data){
+                        data = JSON.parse(data);
+                        // 赋值
+                        var tags = data['firstTags'];
+                        var catalog = data['catalog'];
+                        // alert(tags);
+                        var html ="<option value=''>-请选择标签-</option>";
+                        for(var i=0;i<tags.length;i++){
+                            html +="<option value=\""+ catalog + "$" + tags[i] +"\">" + tags[i] +"</option>";
+                        }
+                        $('#firstTags').html(html);
+                        // alert(html);
+
+                    }
+                    else{alert('获取标签失败');}
+                },
+                error:function () {
+                    alert('请求出错！');
+                },
+                complete:function () {
+
+                }
+            });
+        return false;
+    }
+
+    //加载类目第二标签
+    function reloadSecondTags(ths) {
+        var firstTags = $(ths).val();
+        // alert(catalog);
+        if (!firstTags){
+            alert("获取不了第一标签名称");
+            return false;
+        }
+
+
+        $.ajax({
+                url:'/reloadSecondTags',
+                type:'post',
+                data:{"firstTags":firstTags},
+                beforeSend:function () {
+                    return true
+                },
+                success:function (data) {
+                    if(data){
+                        data = JSON.parse(data);
+                        // 赋值
+                        var tags = data['secondTags'];
+                        // alert(tags);
+                        var html ="<option value=''>-请选择标签-</option>";
+                        for(var i=0;i<tags.length;i++){
+                            html +="<option value=\""+ tags[i] +"\">" + tags[i] +"</option>";
+                        }
+                        $('#secondTags').html(html);
+                        // alert(html);
+
+                    }
+                    else{alert('获取标签失败');}
+                },
+                error:function () {
+                    alert('请求出错！');
+                },
+                complete:function () {
+
+                }
+            });
+        return false;
+    }
+
+    //提交表单
+    function check_form() {
+        var productId = $.trim($('#productId').val());
+        var catalogID = $.trim($('#catalogID').val());
+        var tags = $.trim($('#firstTags').val());
+        var act = $.trim($('#act').val());
+        if (!productId) {
+            alert('产品不能为空！');
+            return false;
+        } else if (!catalogID) {
+            alert('类目不能为空！');
+            return false;
+        } else if (!tags) {
+            alert('请输入标签！');
+            return false;
+        }
+
+        var fields = $("#form_data").serializeArray();
+        fields = JSON.stringify(fields)  //中文会乱码
+        // alert(fields);
+        // 异步提交数据到
+        $.ajax(
+            {
+                type: "POST",
+                url: "/addProduct",
+                data: {"form_data": fields, "act": act},
+
+                beforeSend: function () {
+                    return true;
+                },
+                success: function (data) {
+                    if (data == 0) {
+                        alert("产品已加入热销产品,并从飙升新品中移除！")
+                        location.reload();
+
+                    } else {
+                        var msg = "添加";
+                        if (act == "edit") msg = "编辑";
+                        // document.location.href = '/index'
+                        alert(msg + "成功!" + data + "并从飙升新品中移除！");
+                    }
+                },
+                error: function () {
+                    alert('请求出错');
+                },
+                complete: function () {
+                }
+            });
+
+        return false;
+    }
+
+    //删除产品
+    function deleteProduct(productId) {
+        if (!productId) {
+            alert('产品不能为空！');
+            return false;
+        }
+        $.ajax(
+            {
+                type: "POST",
+                url: "/deleteProduct",
+                data: {"productId": productId},
+
+                beforeSend: function () {
+                    return true;
+                },
+                success: function (data) {
+                    if (data == 0) {
+                        alert("产品不在飙升新品列表中！")
+                    } else {
+                        alert("产品已从列表中删除");
+                    }
+                },
+                error: function () {
+                    alert('请求出错');
+                },
+                complete: function () {
+                }
+            });
+
+        return false;
+    }
+
+    //模态框隐藏时触发该事件
+    $(function () {
+        $('#myAddUserModal').on('hide.bs.modal', function () {
+            // 关闭时清空edit状态为add
+
+            location.reload();
+            $("#act").val("add");
+        })
+    });
+</script>
+
+<div class="pageheader">
+    <form action="/preCompetingsalesData/" method="get" class="form-horizontal form-bordered">
+        <div class="form-group">
+            <!--日期-->
+            <label class="col-sm-1 control-label" style="text-align:right;font-size: 20px">日期:</label>
+            <div class="col-sm-2" style="text-align:left">
+                <input type="date" name="date">
+            </div>
+            <div class="btn-group">
+                <input type="submit" value="查询" class="btn btn-success">
+                <a href="/download_preCompeting/?date={{ date }}" class="btn btn-success" target="_blank">下载查询结果</a>
+            </div>
+        </div>
+    </form>
+</div>
+
+<div class="contentpanel">
+
+    <div class="panel panel-default">
+        <div class="panel-body">
+            <div class="dataTables_info" id="table1_info" role="status" style="padding-top: 15px">
+                {{ totaLNumber }}条数据,总页数{{ pagecontent.paginator.num_pages }}
+            </div>
+            <div class="dataTables_paginate paging_simple_numbers" id="table1_paginate">
+                {% if pagecontent.has_previous %}
+                <a href="?page=1&date={{ date }}"
+                   class="paginate_button previous disabled" aria-controls="table1" data-dt-idx="0" tabindex="0"
+                   id="table1_previous">
+                    First
+                </a>
+                <a href="?page={{ pagecontent.previous_page_number }}&date={{ date }}"
+                   class="paginate_button previous disabled" aria-controls="table1" data-dt-idx="0" tabindex="0"
+                   id="table1_previous">
+                    &laquo;Previous
+                </a>
+                {% endif %}
+                <span>
+                        {% for num in pagecontent.paginator.page_range %}
+                        {% circle_page pagecontent.number num date  %}
+                        {% endfor %}
+                        </span>
+                {% if pagecontent.has_next %}
+                <a href="?page={{ pagecontent.next_page_number }}&date={{ date }}"
+                   class="paginate_button next" aria-controls="table1" data-dt-idx="7" tabindex="0"
+                   id="table1_next">
+                    Next&raquo;
+                </a>
+                <a href="?page={{ totalPages }}&date={{ date }}"
+                   class="paginate_button next" aria-controls="table1" data-dt-idx="7" tabindex="0"
+                   id="table1_next">
+                    last
+                </a>
+                {% endif %}
+            </div>
+        </div>
+
+    </div>
+
+    <div class="panel panel-default">
+
+        <div class="panel-body">
+            <div class="table-responsive">
+                <table class="table" id="table1">
+                    <thead>
+                    <tr>
+                        <th style="text-align: center">产品ID</th>
+                        <th style="text-align: center">产品图片</th>
+                        <th style="text-align: center">价格</th>
+                        <th style="width:100px;text-align: center">类目</th>
+                        <th style="text-align: center">总评分</th>
+                        <th style="text-align: center">总评价</th>
+                        <th style="text-align: center">总销量</th>
+                        <th style="text-align: center">近1天销量</th>
+                        <th style="text-align: center">近2天销量</th>
+                        <th style="text-align: center">近3天销量</th>
+                        <th style="text-align: center">近4天销量</th>
+                        <th style="text-align: center">操作</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for i in pagecontent.object_list %}
+                    <tr>
+                        <td><a href="https://www.aliexpress.com/item/Summer/{{ i.productId }}.html" target="_blank">
+                            {{ i.productId }}</a></td>
+                        <td>
+                            <a href="https://www.aliexpress.com/item/Summer/{{ i.productId }}.html" target="_blank">
+                                <img src="{{ STATIC_URL }}{{i.productId}}.jpg" width="80" height="80" alt="图片无法显示">
+                            </a>
+                        </td>
+                        <td>{{ i.price }}</td>
+                        <td>{{ i.catalog }}</td>
+                        <td>{{ i.productScore }}</td>
+                        <td>{{ i.totalEvaluation }}</td>
+                        <td>{{ i.totalSales }}</td>
+                        <td>{{ i.past1_Sales }}</td>
+                        <td>{{ i.past2_Sales }}</td>
+                        <td>{{ i.past3_Sales }}</td>
+                        <td>{{ i.past4_Sales }}</td>
+                        <td>
+                            <div class="form-horizontal">
+                                <div class="form-group">
+                                    <button id="btnEdit" type="button" class="btn btn-warning" data-toggle="modal"
+                                            data-target="#myAddUserModal"
+                                            onclick="return checkProductId( {{ i.productId }} )">
+                                        <span class="glyphicon glyphicon-edit" aria-hidden="true"></span>加入热销
+                                    </button>
+                                </div>
+                                <div class="form-group">
+                                    <button id="btnEdit" type="button" class="btn btn-danger"
+                                            onclick="return deleteProduct( {{ i.productId }} )">
+                                        <span class="glyphicon glyphicon-edit" aria-hidden="true"></span>删除产品
+                                    </button>
+                                </div>
+                            </div>
+
+
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div><!-- table-responsive -->
+            <div class="clearfix mb30"></div>
+
+
+        </div><!-- panel-body -->
+    </div><!-- panel -->
+
+    <div class="panel panel-default">
+        <div class="panel-body">
+            <div class="dataTables_info" id="table1_info" role="status" style="padding-top: 15px">
+                {{ totaLNumber }}条数据,总页数{{ pagecontent.paginator.num_pages }}
+            </div>
+            <div class="dataTables_paginate paging_simple_numbers" id="table1_paginate">
+                {% if pagecontent.has_previous %}
+                <a href="?page=1&date={{ date }}"
+                   class="paginate_button previous disabled" aria-controls="table1" data-dt-idx="0" tabindex="0"
+                   id="table1_previous">
+                    First
+                </a>
+                <a href="?page={{ pagecontent.previous_page_number }}&date={{ date }}"
+                   class="paginate_button previous disabled" aria-controls="table1" data-dt-idx="0" tabindex="0"
+                   id="table1_previous">
+                    &laquo;Previous
+                </a>
+                {% endif %}
+                <span>
+                        {% for num in pagecontent.paginator.page_range %}
+                        {% circle_page pagecontent.number num date  %}
+                        {% endfor %}
+                        </span>
+                {% if pagecontent.has_next %}
+                <a href="?page={{ pagecontent.next_page_number }}&date={{ date }}"
+                   class="paginate_button next" aria-controls="table1" data-dt-idx="7" tabindex="0"
+                   id="table1_next">
+                    Next&raquo;
+                </a>
+                <a href="?page={{ totalPages }}&date={{ date }}"
+                   class="paginate_button next" aria-controls="table1" data-dt-idx="7" tabindex="0"
+                   id="table1_next">
+                    last
+                </a>
+                {% endif %}
+            </div>
+        </div>
+
+    </div>
+
+
+</div><!-- contentpanel -->
+
+<form class="form-horizontal" role="form" method="post" id="form_data" onsubmit="return check_form()">
+    <div class="modal fade" id="myAddUserModal" role="table">
+        <div class="modal-dialog" style="width:500px;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">
+                        &times;
+                    </button>
+                    <h4 class="modal-title" id="myModalLabel">
+                        加入热销品
+                    </h4>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="act" value="add"/>
+                    <div class=" form-group " style="margin-left: 50px">
+                        <label class="col-sm-4 control-label">产品id</label>
+                        <div class="col-sm-8">
+                            <input type="number" class="form-control" style="width: 150px" id="productId"
+                                   name="productId"
+                                   placeholder="产品id">
+                        </div>
+                    </div>
+                    <div class=" form-group " style="margin-left: 50px">
+                        <label class="col-sm-4 control-label">图片</label>
+                        <div class="col-sm-8">
+                            <img id=img_id src="" width="80" height="80" alt="图片无法显示">
+                        </div>
+                    </div>
+                    <div class="form-group" style="margin-left: 50px">
+                        <label class="col-sm-4 control-label">类目</label>
+                        <select name="catalogID" id="catalogID" onchange="reloadTags(this);">
+                        </select>
+                    </div>
+                    <div class="form-group" style="margin-left: 50px">
+                        <label class="col-sm-4 control-label">第一标签</label>
+                        <select name="firstTags" id="firstTags" onchange="reloadSecondTags(this);"></select>
+                    </div>
+                    <div class="form-group" style="margin-left: 50px">
+                        <label class="col-sm-4 control-label">第二标签(选填)</label>
+                        <select name="secondTags" id="secondTags"></select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">取消
+                    </button>
+                    <button type="submit" class="btn btn-success" id="btn_submit">
+                        提交
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+{% endblock %}
+
+

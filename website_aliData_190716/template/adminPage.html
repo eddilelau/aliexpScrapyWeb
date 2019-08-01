@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="contentpanel">
+
+      <div class="row">
+          <!--2019.04.26-->
+          <div class="col-sm-12">
+              <div class="panel panel-success">
+                  <div class="panel-heading">
+                      <div class="panel-btns">
+                          <a href="" class="panel-close">×</a>
+                          <a href="" class="minimize">−</a>
+                      </div><!-- panel-btns -->
+                      <h3 class="panel-title">数据流</h3>
+                  </div>
+                  <div class="panel-body">
+                      <div class="col-xs-3">
+                          <img src="../static/funnelAli.jpg" style="margin: 0px;float:left;height: 250px">
+                      </div>
+                      <div class="col-xs-9">
+                          <span style="display: inline-block">
+                              <p><strong>类目全量爬虫：</strong>15日为一频次爬取类目Listing销量</p>
+                              <p><strong>潜力新品初次筛选：</strong>比较两次类目全量Listing数据,挑选其中销量增长大于或等于5的Listing</p>
+                              <p><strong>潜力新品二次筛选：</strong>经初次筛选后,监控剩下Listing每日销量.每天挑选近一天销量&ge;5,近5天销量&ge;20的Listing为</p>
+                              <p><strong>潜力新品转热销品监控：</strong>人工挑选并打上细分标签</p>
+                              <p><strong>热销品监控：</strong>每日爬取热销Listing销量,重点标识每日销量&ge;5的Listing</p>
+                              <p><strong>代购推广品(未实现)：</strong>热销品中,近一天销量为近7天日均销量2倍或以上将被列入疑似代购推广品并以邮件形式每日推送</p>
+                              <p><strong>疑侵权品：</strong>记录热销品中被删除的Listing</p>
+                          </span>
+                      </div>
+                  </div>
+              </div><!-- panel -->
+          </div><!-- col-sm-6 -->
+      </div>
+</div><!-- contentpanel -->
+
+
+
+{% endblock %}
+
+

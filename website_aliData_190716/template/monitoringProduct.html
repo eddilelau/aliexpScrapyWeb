@@ -1,0 +1,283 @@
+{% extends 'base.html' %}
+{% block content %}
+
+{% load set_val %}
+{% load pagetag %}
+
+<script type="text/javascript">
+    // 编辑表单
+    function checkProductId(productId) {
+        if (!productId) {
+            alert('Error！');
+            return false;
+        }
+        // var form_data = new Array();
+
+        $.ajax(
+            {
+                url: "/checkProductId",
+                data: {"productId": productId},
+                type: "post",
+                beforeSend: function () {
+                    return true;
+                },
+                success: function (data) {
+                    if (data) {
+                        // 解析json数据
+                        data = JSON.parse(data);
+                        // 赋值;
+                        var id = data["productId"];
+                        var tag = data["tag"];
+                        var dir = "{{ STATIC_URL }}" + id + ".jpg";
+                        $("#productId").val(id);
+                        // 将元素设置为readonly
+                        $('#productId').attr("readonly", "readonly")
+                        $("#img_id").attr("src", dir);
+                        $("#tag").val(tag);
+                        $("#tag").attr("readonly", "readonly")
+                    } else {
+                        alert('操作失败');
+                    }
+                },
+                error: function () {
+                    alert('请求出错');
+                },
+                complete: function () {
+                }
+            });
+
+        return false;
+    }
+
+    //提交表单
+    function check_form() {
+        var productId = $.trim($('#productId').val());
+        var tag = $.trim($('#tag').val());
+        var act = $.trim($('#act').val());
+        if (!productId) {
+            alert('产品不能为空！');
+            return false;
+        } else if (!tag) {
+            alert('请输入标签！');
+            return false;
+        } else if (act != "delete") {
+            alert('动作非删除！');
+            return false;
+        }
+
+        var fields = $("#form_data").serializeArray();
+        fields = JSON.stringify(fields)  //中文会乱码
+        // alert(fields);
+        // 异步提交数据到
+        $.ajax(
+            {
+                type: "POST",
+                url: "/addProduct",
+                data: {"form_data": fields, "act": act},
+
+                beforeSend: function () {
+                    return true;
+                },
+
+                success: function (data) {
+                    if (data == 0) {
+                        alert("产品标签删除失败！")
+                        location.reload();
+
+                    } else {
+                        alert("删除成功!" + data);
+                    }
+                },
+                error: function () {
+                    alert('请求出错');
+                },
+                complete: function () {
+                }
+            });
+
+        return false;
+    }
+
+    //模态框隐藏时触发该事件
+    $(function () {
+        $('#myAddUserModal').on('hide.bs.modal', function () {
+            // 关闭时清空edit状态为add
+
+            location.reload();
+            $("#act").val("edit");
+        })
+    });
+</script>
+
+
+
+
+<div class="pageheader">
+    <form action="/monitoringProduct/" method="get" class="form-horizontal form-bordered" style="padding-left: 20px">
+        <div class="form-group">
+            <!--分组-->
+            <div class="col-sm-1">
+                <select name="tagID"  style="height: 40px">
+                    <option >请选择标签</option>
+                    {% for tagID in tagsID %}
+                    <option value="{{ tagID.name }}">{{ tagID.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+
+            <!--日期-->
+            <div class="col-sm-2" style="padding-left: -20px;">
+                <input type="date" name="date">
+            </div>
+
+            <div class="col-sm-1" >
+                <input type="submit" value="查询" class="btn btn-success">
+            </div>
+        </div>
+    </form>
+</div>
+
+<div class="contentpanel">
+
+
+    <div class="col-md-12">
+
+        <div class="panel-group panel-group-dark" id="accordion2">
+
+            <div class="panel panel-default">
+                    <div class="panel-body">
+                        <div class="table-responsive">
+                            <table class="table" id="table1">
+                                <thead>
+                                <tr>
+                                    <th style="text-align: center">产品ID</th>
+                                    <th style="width:80px;text-align: center">产品图片</th>
+                                    <th style="width:80px;text-align: center">价格</th>
+                                    <th style="text-align: center">类目</th>
+                                    <th style="text-align: center">总评分</th>
+                                    <th style="text-align: center">总评价</th>
+                                    <th style="text-align: center">总销量</th>
+                                    <th style="text-align: center">近1天销量</th>
+                                    <th style="text-align: center">近2天销量</th>
+                                    <th style="text-align: center">近3天销量</th>
+                                    <th style="text-align: center">近4天销量</th>
+                                    <th style="text-align: center">操作</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                {% for item in QuerySets %}
+                                {% if item.past1_Sales > 4 %}
+                                <tr class="alert alert-success" style="background-color: #1caf9a;color: white" >
+                                    <td><a href="https://www.aliexpress.com/item/Summer/{{ item.productId }}.html"
+                                           target="_blank"
+                                           style="color: gray">{{ item.productId }}</a></td>
+                                    <td><img src="../static/{{ item.productId }}.jpg" width="80" height="80"
+                                             alt="图片无法显示"></td>
+                                    <td>{{ item.price }}</td>
+                                    <td>{{ item.firstCategory }}</td>
+                                    <td>{{ item.productScore }}</td>
+                                    <td>{{ item.totalEvaluation }}</td>
+                                    <td>{{ item.totalSales }}</td>
+                                    <td>{{ item.past1_Sales }}</td>
+                                    <td>{{ item.past2_Sales }}</td>
+                                    <td>{{ item.past3_Sales }}</td>
+                                    <td>{{ item.past4_Sales }}</td>
+                                    <td>
+                                        <button id="btnEdit" type="button" class="btn btn-danger" data-toggle="modal"
+                                                data-target="#myAddUserModal"
+                                                onclick="return checkProductId( {{ item.productId }} )">
+                                            <span class="glyphicon glyphicon-edit" aria-hidden="true"></span>删除监控标签
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td><a href="https://www.aliexpress.com/item/Summer/{{ item.productId }}.html"
+                                           target="_blank"
+                                           style="color: gray">{{ item.productId }}</a></td>
+                                    <td><img src="../static/{{ item.productId }}.jpg" width="80" height="80"
+                                             alt="图片无法显示"></td>
+                                    <td>{{ item.price }}</td>
+                                    <td>{{ item.firstCategory }}</td>
+                                    <td>{{ item.productScore }}</td>
+                                    <td>{{ item.totalEvaluation }}</td>
+                                    <td>{{ item.totalSales }}</td>
+                                    <td>{{ item.past1_Sales }}</td>
+                                    <td>{{ item.past2_Sales }}</td>
+                                    <td>{{ item.past3_Sales }}</td>
+                                    <td>{{ item.past4_Sales }}</td>
+                                    <td>
+                                        <button id="btnEdit" type="button" class="btn btn-danger" data-toggle="modal"
+                                                data-target="#myAddUserModal"
+                                                onclick="return checkProductId( {{ item.productId }} )">
+                                            <span class="glyphicon glyphicon-edit" aria-hidden="true"></span>删除监控标签
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endif %}
+                                {% endfor %}
+                                </tbody>
+                            </table>
+                        </div><!-- table-responsive -->
+                    </div>
+            </div>
+            <div class="clearfix mb30"></div>
+
+        </div>
+
+    </div>
+
+</div><!-- contentpanel -->
+
+<form class="form-horizontal" role="form" method="post" id="form_data" onsubmit="return check_form()">
+    <div class="modal fade" id="myAddUserModal" role="table">
+        <div class="modal-dialog" style="width:500px;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">
+                        &times;
+                    </button>
+                    <h4 class="modal-title" id="myModalLabel">
+                        加入热销品
+                    </h4>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="act" value="delete"/>
+                    <div class="form-group " style="margin-left: 50px">
+                        <label class="col-sm-4 control-label">产品id</label>
+                        <div class="col-sm-8">
+                            <input type="number" class="form-control" style="width: 150px" id="productId"
+                                   name="productId"
+                                   placeholder="产品id">
+                        </div>
+                    </div>
+                    <div class="form-group " style="margin-left: 50px">
+                        <label class="col-sm-4 control-label">图片</label>
+                        <div class="col-sm-8">
+                            <img id=img_id src="" width="80" height="80" alt="图片无法显示">
+                        </div>
+                    </div>
+                    <div class="form-group" style="margin-left: 50px">
+                        <label class="col-sm-4 control-label">监控标签</label>
+                        <div class="col-sm-8">
+                                <input type="text" class="form-control" style="width: 150px" id="tag" name="tag"
+                                       placeholder="产品无标签">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">取消
+                    </button>
+                    <button type="submit" class="btn btn-danger" id="btn_submit">
+                        确认删除标签
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+
+{% endblock %}
+
