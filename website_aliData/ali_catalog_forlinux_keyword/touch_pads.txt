@@ -1,2 +1,0 @@
-touchpad
-tableta grafica para dibujar
