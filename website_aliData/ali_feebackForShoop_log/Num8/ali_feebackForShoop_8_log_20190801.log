@@ -1,8 +1,0 @@
-Traceback (most recent call last):
-  File "./ali_feebackForshoop8.py", line 165, in <module>
-    main()
-  File "./ali_feebackForshoop8.py", line 161, in main
-    getFeedback(i,file_name)
-  File "./ali_feebackForshoop8.py", line 136, in getFeedback
-    with open('/root/venv/ali_feebackForShoop_Data/Num8/'+file_name,'a+',encoding='utf-8') as f:
-FileNotFoundError: [Errno 2] No such file or directory: '/root/venv/ali_feebackForShoop_Data/Num8/Num8_ShoopFeedback2019-08-01.txt'
