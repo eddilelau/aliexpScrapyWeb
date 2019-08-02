@@ -52,7 +52,6 @@ def getSession():
     session.headers.update(headers)
     return session
 
-
 def download_image(url,file_path):
     #print('正在下载图片', url)
     headers = {
