@@ -15,6 +15,7 @@ from config import *
 from requests import *
 import requests
 import json
+import json.decoder
 import random
 
 # 配置mongodb数据库
@@ -84,7 +85,7 @@ def fetch_content(key_word,page,retry_num,session):   #异步函数
                 fetch_content(key_word,page, retry_num,session)
             else:
                 return None
-    except (requests.exceptions.ConnectionError,requests.exceptions.SSLError,KeyError) as EX:
+    except (requests.exceptions.ConnectionError,requests.exceptions.SSLError,KeyError,json.decoder) as EX:
         retry_num += 1
         if retry_num <=4:
             print(EX)
