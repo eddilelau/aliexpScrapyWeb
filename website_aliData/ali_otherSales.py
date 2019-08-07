@@ -52,7 +52,6 @@ def saveToSQLite(sqlDB,NCPI_set):
     sqlDB.objects.bulk_create(NCPI_set)
     # print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),'insert {} products into {}'.format(len(NCPI_set),sqlDB))
 
-
 async def getData(productId,try_num):
     try:
         header = {
