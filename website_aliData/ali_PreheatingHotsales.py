@@ -21,6 +21,8 @@ import random
 import uvloop
 import pymysql
 import json
+from django.db.models import Count
+
 
 def getRandomAgent():
     USER_AGENTS = [
@@ -69,103 +71,95 @@ def download_image(url,file_path):
     except requests.RequestException:
         print('请求图片错误', url)
 
-def saveTomysql(product_summary):
-    if product_summary['firstCategory'] not in ("Consumer Electronics","Cellphones & Telecommunications","Computer & Office","Security & Protection",""):
-        newCompetingProductInfo.objects.filter(productId = product_summary['productId']).delete()
-    else:
-        newCompetingProductDailySales.objects.update_or_create(
-            productId=product_summary['productId'],
-            title=product_summary['title'],
-            totalSales=product_summary['totalSales'],
-            totalEvaluation=product_summary['totalEvaluation'],
-            productScore=product_summary['productScore'],
-            price=product_summary['price'],
-            picUrl=product_summary['picUrl'],
-            date=product_summary['date'],
-            home=product_summary['home'],
-            allCategories=product_summary['allCategories'],
-            firstCategory=product_summary['firstCategory'],
-            secondCategory=product_summary['secondCategory'],
-            thirdCategory=product_summary['thirdCategory'],
-            fourthCategory=product_summary['fourthCategory'],
-            fifthCategory=product_summary['fifthCategory'],
-            sixthCategory=product_summary['sixthCategory'],
-            seventhCategory=product_summary['seventhCategory'],
-            eigthCategory=product_summary['eigthCategory'],
-        )
+def insertToNewCompetingProductDailySales(productInfo):
+    newCompetingProductDailySales.objects.bulk_create(productInfo)
+    print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),"写入blog_newCompetingProductDailySales表数据{}".format(len(productInfo)))
 
-        past1_date=product_summary['date'] + datetime.timedelta(days=-1)
-        past4_date=product_summary['date'] + datetime.timedelta(days=-4)
-        if newCompetingProductDailySales.objects.filter(date__range=(past4_date,product_summary['date']), productId=product_summary['productId']).count()>=5:
-            totalsales_lists=newCompetingProductDailySales.objects.filter(date__range=(past4_date,past1_date),productId=product_summary['productId']).order_by('-date').values_list('totalSales', flat=True)
-            past_sales_list=[]
-            for totalsales in totalsales_lists:
-                past_sales_list.append(int(product_summary['totalSales']) - totalsales)
-                print("past1_sales_list is {}".format(past_sales_list))
+def updateToNewCompetingProductDailySalesforFiveDays():
 
+        date=datetime.date.today()
+        past1_date=date + datetime.timedelta(days=-1)
+        past2_date=date + datetime.timedelta(days=-2)
+        past3_date=date + datetime.timedelta(days=-3)
+        past4_date=date + datetime.timedelta(days=-4)
+        past1_data={productInfo['productId']: productInfo['totalSales'] for productInfo in newCompetingProductDailySales.objects.filter(date=past1_date).values('productId', 'totalSales')}
+        past2_data={productInfo['productId']: productInfo['totalSales'] for productInfo in newCompetingProductDailySales.objects.filter(date=past2_date).values('productId', 'totalSales')}
+        past3_data={productInfo['productId']: productInfo['totalSales'] for productInfo in newCompetingProductDailySales.objects.filter(date=past3_date).values('productId', 'totalSales')}
+        past4_data={productInfo['productId']: productInfo['totalSales'] for productInfo in newCompetingProductDailySales.objects.filter(date=past4_date).values('productId', 'totalSales')}
 
-            # Eliminate competing product
-            if past_sales_list[3] < 5:
-                newCompetingProductInfo.objects.filter(productId=product_summary['productId']).delete()
-            # add hot competing product
-            elif past_sales_list[0]>=5 and past_sales_list[1]>=10:
-                print("{}飙升新品被添加到热卖产品".format(product_summary['productId']))
-                competingProductInfo.objects.update_or_create(productId=product_summary['productId'])
-                newProductIdFiveDayData=newCompetingProductDailySales.objects.filter(date__range=(past4_date, product_summary['date']),productId=product_summary['productId']).order_by('-date')
-                productDataList=[]
-                for productData in newProductIdFiveDayData:
-                    productDataList.append(competingProductDailySales(
-                        productId=productData.productId,
-                        title=productData.title,
-                        totalSales=productData.totalSales,
-                        totalEvaluation=productData.totalEvaluation,
-                        productScore=productData.productScore,
-                        price=productData.price,
-                        picUrl=productData.picUrl,
-                        date=productData.date,
-                        home=productData.home,
-                        allCategories=productData.allCategories,
-                        firstCategory=productData.firstCategory,
-                        secondCategory=productData.secondCategory,
-                        thirdCategory=productData.thirdCategory,
-                        fourthCategory=productData.fourthCategory,
-                        fifthCategory=productData.fifthCategory,
-                        sixthCategory=productData.sixthCategory,
-                        seventhCategory=productData.seventhCategory,
-                        eigthCategory=productData.eigthCategory,
-                    ))
-                competingProductDailySales.objects.bulk_create(productDataList)
-                competingProductDailySalesforFiveDays.objects.update_or_create(
-                    productId=product_summary['productId'],
-                    title=product_summary['title'],
-                    totalSales=product_summary['totalSales'],
-                    totalEvaluation=product_summary['totalEvaluation'],
-                    productScore=product_summary['productScore'],
-                    price=product_summary['price'],
-                    picUrl=product_summary['picUrl'],
-                    date=product_summary['date'],
-                    past1_Sales=past_sales_list[0],
-                    past2_Sales=past_sales_list[1],
-                    past3_Sales=past_sales_list[2],
-                    past4_Sales=past_sales_list[3],
-                    home=product_summary['home'],
-                    allCategories=product_summary['allCategories'],
-                    firstCategory=product_summary['firstCategory'],
-                    secondCategory=product_summary['secondCategory'],
-                    thirdCategory=product_summary['thirdCategory'],
-                    fourthCategory=product_summary['fourthCategory'],
-                    fifthCategory=product_summary['fifthCategory'],
-                    sixthCategory=product_summary['sixthCategory'],
-                    seventhCategory=product_summary['seventhCategory'],
-                    eigthCategory=product_summary['eigthCategory'],
-                )
-                newCompetingProductInfo.objects.filter(productId = product_summary['productId']).delete()
+        for product_summary in newCompetingProductDailySales.objects.filter(date=date):
+            if (product_summary.productId in past1_data.keys()) and (product_summary.productId in past2_data.keys()) and (product_summary.productId in past3_data.keys()) and (product_summary.productId in past4_data.keys()):
+                # calculate pastX_Sales
+                past1_Sales=int(product_summary.totalSales) - past1_data[product_summary.productId]
+                past2_Sales=int(product_summary.totalSales) - past2_data[product_summary.productId]
+                past3_Sales=int(product_summary.totalSales) - past3_data[product_summary.productId]
+                past4_Sales=int(product_summary.totalSales) - past4_data[product_summary.productId]
+                # Eliminate competing product
+                if past4_Sales < 5:
+                    print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),"{}飙升新品近5日销量少于5,从列表中剔除".format(product_summary.productId))
+                    newCompetingProductInfo.objects.filter(productId=product_summary.productId).delete()
+                # add hot competing product
+                elif past1_Sales>=5 and past2_Sales>=10:
+                    print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),"{}飙升新品被添加到热卖产品,并从飙升新品列表中删除".format(product_summary.productId))
+                    competingProductInfo.objects.update_or_create(productId=product_summary.productId)
+                    newProductIdFiveDayData=newCompetingProductDailySales.objects.filter(date__range=(past4_date, date),productId=product_summary.productId).order_by('-date')
+                    productDataList=[]
+                    for productData in newProductIdFiveDayData:
+                        productDataList.append(competingProductDailySales(
+                            productId=productData.productId,
+                            title=productData.title,
+                            totalSales=productData.totalSales,
+                            totalEvaluation=productData.totalEvaluation,
+                            productScore=productData.productScore,
+                            price=productData.price,
+                            picUrl=productData.picUrl,
+                            date=productData.date,
+                            home=productData.home,
+                            allCategories=productData.allCategories,
+                            firstCategory=productData.firstCategory,
+                            secondCategory=productData.secondCategory,
+                            thirdCategory=productData.thirdCategory,
+                            fourthCategory=productData.fourthCategory,
+                            fifthCategory=productData.fifthCategory,
+                            sixthCategory=productData.sixthCategory,
+                            seventhCategory=productData.seventhCategory,
+                            eigthCategory=productData.eigthCategory,
+                        ))
+                    competingProductDailySales.objects.bulk_create(productDataList)
+                    competingProductDailySalesforFiveDays.objects.update_or_create(
+                        productId=product_summary.productId,
+                        title=product_summary.title,
+                        totalSales=product_summary.totalSales,
+                        totalEvaluation=product_summary.totalEvaluation,
+                        productScore=product_summary.productScore,
+                        price=product_summary.price,
+                        picUrl=product_summary.picUrl,
+                        date=product_summary.date,
+                        past1_Sales=past1_Sales,
+                        past2_Sales=past2_Sales,
+                        past3_Sales=past3_Sales,
+                        past4_Sales=past4_Sales,
+                        home=product_summary.home,
+                        allCategories=product_summary.allCategories,
+                        firstCategory=product_summary.firstCategory,
+                        secondCategory=product_summary.secondCategory,
+                        thirdCategory=product_summary.thirdCategory,
+                        fourthCategory=product_summary.fourthCategory,
+                        fifthCategory=product_summary.fifthCategory,
+                        sixthCategory=product_summary.sixthCategory,
+                        seventhCategory=product_summary.seventhCategory,
+                        eigthCategory=product_summary.eigthCategory,
+                    )
+                    newCompetingProductInfo.objects.filter(productId = product_summary.productId).delete()
 
 def addToinfringeProductinfo(product_id):
+    # variable
+    infringeProductNum=infringeProductinfo.objects.filter(productId=product_id).exists()
+    productInfoNum=newCompetingProductDailySales.objects.filter(productId=product_id).exists()
     # logic
-    if newCompetingProductDailySales.objects.filter(productId = product_id).exists():
+    if productInfoNum:
         productData=newCompetingProductDailySales.objects.filter(productId=product_id).order_by('-date')[0]
-        if infringeProductinfo.objects.filter(productId = product_id).exists():
+        if infringeProductNum:
             infringeProductData=infringeProductinfo.objects.filter(productId=product_id)[0]
             if infringeProductData.updateDate == datetime.date.today() - datetime.timedelta(days=1):
                 if infringeProductData.confirm_times>=2:
@@ -217,19 +211,15 @@ def fetch_content(product_id,retry_num,session):   #异步函数
         content=response.text  # 等待直到获取成功
         status=response.status_code
         if status == 200:
-            # await parseContent(product_id,content=content)
             content_gbk=content.encode('utf-8').decode('gbk', 'ignore')
             if re.findall('window.runParams = \{\s*data:(.*?),\s*csrfToken', content_gbk, re.S):
-                product_summary=parseContent(product_id, content=content)
-                if product_summary != None:
-                    saveTomysql(product_summary)
-                    download_image(product_summary['picUrl'], './static/' + str(product_id) + '.jpg')
+                return parseContent(product_id, content=content)
             else:
-                print(content_gbk)
-                print("{}产品没返回正确数据:暂停30s".format(product_id))
+                # print(content_gbk)
+                print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),"{}产品没返回正确数据:暂停30s".format(product_id))
                 return product_id
         elif status == 404:
-            print("产品ID:{},服务器找不到产品详情,重试{}".format(product_id, retry_num))
+            print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),"产品ID:{},服务器找不到产品详情,重试{}".format(product_id, retry_num))
             retry_num+=1
             if retry_num <= 4:
                 fetch_content(product_id, retry_num, session)
@@ -243,12 +233,11 @@ def fetch_content(product_id,retry_num,session):   #异步函数
             fetch_content(product_id,retry_num,session)
         else:
             time.sleep(60*10)
-            print(str(product_id) + '服务器没有响应' + '\n')
+            print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),str(product_id) + '服务器没有响应' + '\n')
             return product_id
 
 def parseContent(product_id,content):
     content_gbk=content.encode('utf-8').decode('gbk', 'ignore')
-    # print(content_gbk)
     data_string=re.findall('window.runParams = \{\s*data:(.*?),\s*csrfToken', content_gbk, re.S)[0]
     data_json=json.loads(data_string)
     # print(type(data_json),data_string)
@@ -289,7 +278,7 @@ def parseContent(product_id,content):
         'eigthCategory': product_catalog[7] if len(product_catalog) >= 8 else "",
     }
 
-    print('完成' + str(product_id) + "销售数据爬取!")
+    print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),'完成' + str(product_id) + "销售数据爬取!")
     return product_summary
 
 def send_mail(Spend_Time):
@@ -329,17 +318,51 @@ def send_mail(Spend_Time):
 def main(productIdlist):
     sessionNum=0
     session = getSession()
+    productInfo=[]
     while productIdlist:
         productId=productIdlist.pop()
-        print("开始爬虫{}".format(productId),"等待爬虫产品数据为{}".format(len(productIdlist)))
-        productId=fetch_content(productId, retry_num=1,session=session)
-        if productId:
+        print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),"开始爬虫{}".format(productId),"等待爬虫产品数据为{}".format(len(productIdlist)))
+        result=fetch_content(productId, retry_num=1,session=session)
+        if type(result) is int:
             productIdlist.append(productId)
-            print("产品{}爬虫失败,返回消息列表".format(productId), "等待爬虫产品数据为{}".format(len(productIdlist)))
+            print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),"产品{}爬虫失败,返回消息列表".format(productId), "等待爬虫产品数据为{}".format(len(productIdlist)))
             time.sleep(10*random.randint(1,6))
+        elif type(result) is dict:
+            if result['firstCategory'] not in ( "Consumer Electronics", "Cellphones & Telecommunications", "Computer & Office", "Security & Protection",""):
+                newCompetingProductInfo.objects.filter(productId=result['productId']).delete()
+            else:
+                productInfo.append(
+                    newCompetingProductDailySales(
+                        productId=result['productId'],
+                        title=result['title'],
+                        totalSales=result['totalSales'],
+                        totalEvaluation=result['totalEvaluation'],
+                        productScore=result['productScore'],
+                        price=result['price'],
+                        picUrl=result['picUrl'],
+                        date=result['date'],
+                        home=result['home'],
+                        allCategories=result['allCategories'],
+                        firstCategory=result['firstCategory'],
+                        secondCategory=result['secondCategory'],
+                        thirdCategory=result['thirdCategory'],
+                        fourthCategory=result['fourthCategory'],
+                        fifthCategory=result['fifthCategory'],
+                        sixthCategory=result['sixthCategory'],
+                        seventhCategory=result['seventhCategory'],
+                        eigthCategory=result['eigthCategory'],
+                    )
+                )
+                download_image(result['picUrl'], './static/' + str(result['productId']) + '.jpg')
+        if len(productInfo) % 200 == 0:
+            insertToNewCompetingProductDailySales(productInfo)
+            productInfo=[]
         sessionNum+=1
         if sessionNum % 20 ==0:
             session=getSession()
+    insertToNewCompetingProductDailySales(productInfo)
+    updateToNewCompetingProductDailySalesforFiveDays()
+
 
 if __name__ == '__main__':
     Start_Time = time.time()
