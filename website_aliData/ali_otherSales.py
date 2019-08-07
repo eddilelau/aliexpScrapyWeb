@@ -20,9 +20,12 @@ from config import *
 import random
 import uvloop
 import asyncio,aiohttp
+from pymongo import UpdateOne
 
 client = pymongo.MongoClient(MONGO_URI)
 db = client[MONGO_DB_otherSale]
+global productIdlist
+
 
 def getRandomAgent():
     USER_AGENTS = [
@@ -45,13 +48,10 @@ def getRandomAgent():
     ]
     return USER_AGENTS[random.randint(0,9)]
 
-def saveToSQLite(sqlDB,productId):
-    sqlDB.objects.get_or_create(
-        productId=productId,
-    )
+def saveToSQLite(sqlDB,NCPI_set):
+    sqlDB.objects.bulk_create(NCPI_set)
+    # print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),'insert {} products into {}'.format(len(NCPI_set),sqlDB))
 
-def writeMongo(productId,productOrder,productReview):
-    db['otherSales'].update_one({'productID': productId},{'$set': {'ProductOrder': productOrder, 'ProductReview': productReview}}, True)
 
 async def getData(productId,try_num):
     try:
@@ -62,29 +62,44 @@ async def getData(productId,try_num):
         async with aiohttp.ClientSession() as session:
             async with session.get(url,headers =header) as response:
                 response,status = await response.text(),response.status
-        if status == 200:
-            otherSalesList = json.loads(re.findall(r'__jp7\((.*)\)', response)[0])['results']
+                # print(response,status)
+                response_json=json.loads(re.findall(r'__jp7\((.*)\)', response)[0])
+        if status == 200 and ('results' in response_json.keys()):
+            otherSalesList = response_json['results']
             if otherSalesList is not None:
+                NCPI_set=set()
+                bulkUpdate=[]
+                mongodProductInfoList=list(db['otherSales'].find({}, {'productID': 1, 'ProductOrder': 1}))
+                mongodProductInfoDict={mongodProductInfoList[i]['productID']: int(mongodProductInfoList[i]['ProductOrder']) for i in range(len(mongodProductInfoList))}
+                competingProductLists=competingProductInfo.objects.all().values_list("productId", flat=True)
                 for otherSales in otherSalesList:
                     productID=otherSales['productId']  # 已确认空格被清除
-                    db['otherSales'].update_one({'productID': productID}, {
-                        '$set': {'ProductOrder': otherSales['totalTranpro3'],
-                                 'ProductReview': otherSales['itemEvalTotalNum']}}, True)
-                    if db['otherSales'].find_one({'productID': productID}) and (int(otherSales['totalTranpro3']) - int(
-                            db['otherSales'].find_one({'productID': productID})['ProductOrder'])) >= 5:
-                        if competingProductInfo.objects.filter(productId=productID).count() == 0:
-                            saveToSQLite(newCompetingProductInfo, productID)
-                print("{}的其他相似产品爬去完成！".format(str(productId)))
+                    if productID in mongodProductInfoDict.keys() and (int(otherSales['totalTranpro3']) - int(mongodProductInfoDict[productID])) >= 5:
+                        if productID in competingProductLists:
+                            NCPI_set.add(productID)
+                    bulkUpdate.append(UpdateOne({'productID': productID}, { '$set': {'ProductOrder': otherSales['totalTranpro3'],'ProductReview': otherSales['itemEvalTotalNum']}}, True))
+                db['otherSales'].bulk_write(bulkUpdate)
+                # print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),'update {} products into {}'.format(len(bulkUpdate), 'mongodb'))
+                NCPI_list=[]
+                for productId in NCPI_set:
+                    NCPI_item=newCompetingProductInfo(productId=productId)
+                    NCPI_list.append(NCPI_item)
+                saveToSQLite(newCompetingProductInfo, NCPI_list)
+                print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),"{}的其他相似产品爬取完成！更新mongodb产品数{}个,插入newCompetingProductInfo产品数{}个".format(str(productId),len(bulkUpdate),len(NCPI_list)))
+        elif 'blocked' in response_json.keys():
+            if response_json['blocked'] == True:
+                productIdlist.append(productId)
+                print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),'{}产品请求失败重新加回消息列表,{}个产品待爬取'.format(productId,len(productIdlist)))
         else:
-            print(str(productId),'无相似产品推荐',status)
+            print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),str(productId),'无相似产品推荐',status)
     except Exception as EX:
-        try_num += 1 	
-        if try_num <= 10:
-            print(EX,"获取{}数据失败,重新尝试{}次".format(productId,try_num))
+        try_num += 1
+        if try_num <= 3:
+            print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),EX,"获取{}数据失败,重新尝试{}次".format(productId,try_num))
             # time.sleep(60)
             return getData(productId,try_num)
         else:
-            print(str(productId) + '服务器没有响应'  + '\n')
+            print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),str(productId) + '服务器没有响应'  + '\n')
 
 def sendEmail(Total_time):
     """
@@ -116,30 +131,30 @@ def sendEmail(Total_time):
         server.login(my_sender, my_pass)  # 括号中对应的是发件人邮箱账号、邮箱密码
         server.sendmail(my_sender, [my_user, ], message.as_string())  # 括号中对应的是发件人邮箱账号、收件人邮箱账号、发送邮件
         server.quit()  # 关闭连接
-        print('邮件发送成功')
+        print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),'邮件发送成功')
     except Exception as ex:  # 如果 try 中的语句没有执行，则会执行下面的 ret=False
-        print(ex)
+        print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),ex)
         ret = False
     return ret
 
-def main(productIdlist):
+def main(scrapyProduct):
     # loop = asyncio.get_event_loop()
     loop=uvloop.new_event_loop()  # can not use in windows
     asyncio.set_event_loop(loop)
-    tasks = [asyncio.ensure_future(getData(product.productId,try_num= 1)) for product in productIdlist]
+    tasks = [asyncio.ensure_future(getData(product,try_num= 1)) for product in scrapyProduct]
     loop.run_until_complete(asyncio.wait(tasks))
 
 
 if __name__ == '__main__':
     Start_Time = time.time()
-    productIdlist = competingProductInfo.objects.all()  # 数据库读取产品ID
-    groupNum=30
-    m = int(len(productIdlist)/groupNum)
-    n = len(productIdlist)%groupNum
-    if n>0:
-        m+=1
-    for i in range(m):
-        main(productIdlist[i*groupNum:(i+1)*groupNum])
+    productIdlist = list(competingProductInfo.objects.all().values_list('productId',flat=True))  # 数据库读取产品ID
+    scrapyProduct=[]
+    while productIdlist:
+        scrapyProduct.append(productIdlist.pop())
+        if len(scrapyProduct) >= 30:
+            main(scrapyProduct)
+            scrapyProduct=[]
+    main(scrapyProduct)
     End_Time=time.time()
     Total_time=str(round((End_Time - Start_Time) / 60, 2))
     sendEmail( Total_time)
