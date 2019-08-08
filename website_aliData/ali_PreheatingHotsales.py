@@ -180,7 +180,6 @@ def updateToNewCompetingProductDailySalesforFiveDays():
             "{}条热卖产品被添加".format(len(competingProductDailySalesforFiveDaysData)),
         )
 
-
 def addToinfringeProductinfo(product_id):
     # variable
     infringeProductNum=infringeProductinfo.objects.filter(productId=product_id).exists()
