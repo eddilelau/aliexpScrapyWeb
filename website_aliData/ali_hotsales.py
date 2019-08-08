@@ -126,7 +126,7 @@ def updateToCompetingProductDailySalesforFiveDays():
             if past4_Sales<5 and competingProductInfo.objects.filter(productId =product_summary.productId).values_list('tag', flat=True)[0] ==None:
                 print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),"{}热销品近5日销量少于5,从列表中剔除".format(product_summary.productId))
                 competingProductInfo.objects.filter(productId =product_summary.productId).delete()
-        if len(bulkInsertData) % 200 == 0:
+        if len(bulkInsertData) % 200 == 0 and len(bulkInsertData)!=0:
             competingProductDailySalesforFiveDays.objects.bulk_create(bulkInsertData)
             print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),"开始转换{}个热销品近5日销量到宽表".format(len(bulkInsertData)))
             bulkInsertData=[]
@@ -338,10 +338,10 @@ def main(productIdlist):
                 )
             )
             download_image(result['picUrl'], './static/' + str(result['productId']) + '.jpg')
-        if len(productInfo) % 200 ==0:
+        if len(productInfo) % 200 ==0 and len(productInfo) != 0:
             insertToCompetingProductDailySales(productInfo)
             productInfo=[]
-        if sessionNum % 20 ==0:
+        if sessionNum % 20 ==0 and sessionNum != 0:
             session=getSession()
         sessionNum+=1
     insertToCompetingProductDailySales(productInfo)

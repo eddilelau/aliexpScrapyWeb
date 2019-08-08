@@ -84,13 +84,14 @@ def updateToNewCompetingProductDailySalesforFiveDays():
         past2_data={productInfo['productId']: productInfo['totalSales'] for productInfo in newCompetingProductDailySales.objects.filter(date=past2_date).values('productId', 'totalSales')}
         past3_data={productInfo['productId']: productInfo['totalSales'] for productInfo in newCompetingProductDailySales.objects.filter(date=past3_date).values('productId', 'totalSales')}
         past4_data={productInfo['productId']: productInfo['totalSales'] for productInfo in newCompetingProductDailySales.objects.filter(date=past4_date).values('productId', 'totalSales')}
+        competingProductId=competingProductInfo.objects.values_list('productId',flat=True)
 
         competingProductDailySalesforFiveDaysData=[]
         competingProductDailySalesData=[]
-        competingProductInfoAdd=[]
+        competingProductInfoAdd=set()
         newCompetingProductIdDelete=[]
         for product_summary in newCompetingProductDailySales.objects.filter(date=date):
-            if (product_summary.productId in past1_data.keys()) and (product_summary.productId in past2_data.keys()) and (product_summary.productId in past3_data.keys()) and (product_summary.productId in past4_data.keys()):
+            if product_summary.productId not in competingProductId and (product_summary.productId in past1_data.keys()) and (product_summary.productId in past2_data.keys()) and (product_summary.productId in past3_data.keys()) and (product_summary.productId in past4_data.keys()):
                 # calculate pastX_Sales
                 past1_Sales=int(product_summary.totalSales) - past1_data[product_summary.productId]
                 past2_Sales=int(product_summary.totalSales) - past2_data[product_summary.productId]
@@ -103,7 +104,7 @@ def updateToNewCompetingProductDailySalesforFiveDays():
                 # add hot competing product
                 elif past1_Sales>=5 and past2_Sales>=10:
                     print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),"{}飙升新品被添加到热卖产品,并从飙升新品列表中删除".format(product_summary.productId))
-                    competingProductInfoAdd.append(competingProductInfo(productId=product_summary.productId))
+                    competingProductInfoAdd.add(competingProductInfo(productId=product_summary.productId))
                     newProductIdFiveDayData=newCompetingProductDailySales.objects.filter(date__range=(past4_date, date),productId=product_summary.productId).order_by('-date')
                     for productData in newProductIdFiveDayData:
                         competingProductDailySalesData.append(competingProductDailySales(
@@ -152,7 +153,7 @@ def updateToNewCompetingProductDailySalesforFiveDays():
                         eigthCategory=product_summary.eigthCategory,
                     ))
                     newCompetingProductIdDelete.append(product_summary.productId)
-            if len(newCompetingProductIdDelete) % 200 == 0:
+            if len(newCompetingProductIdDelete) % 200 == 0 and len(newCompetingProductIdDelete) != 0:
                 newCompetingProductInfo.objects.filter(productId__in=newCompetingProductIdDelete).delete()
                 competingProductInfo.objects.bulk_create(competingProductInfoAdd)
                 competingProductDailySales.objects.bulk_create(competingProductDailySalesData)
@@ -160,13 +161,13 @@ def updateToNewCompetingProductDailySalesforFiveDays():
                 print(
                     time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),
                     "{}个飙升新品被删除".format(len(newCompetingProductIdDelete)),
-                    "{}个热卖产品被添加".format(len(competingProductInfoAdd)),
-                    "{}条热卖产品销售数据被添加".format(len(competingProductDailySalesData)),
-                    "{}条热卖产品被添加".format(len(competingProductDailySalesforFiveDaysData)),
+                    "{}个飙升产品被添加到热卖竞品".format(len(competingProductInfoAdd)),
+                    "{}条飙升产品销售数据被添加到热卖竞品".format(len(competingProductDailySalesData)),
+                    "{}条飙升产品销售宽表数据被添加热卖竞品".format(len(competingProductDailySalesforFiveDaysData)),
                 )
                 competingProductDailySalesforFiveDaysData=[]
                 competingProductDailySalesData=[]
-                competingProductInfoAdd=[]
+                competingProductInfoAdd=set()
                 newCompetingProductIdDelete=[]
         newCompetingProductInfo.objects.filter(productId__in=newCompetingProductIdDelete).delete()
         competingProductInfo.objects.bulk_create(competingProductInfoAdd)
@@ -175,10 +176,11 @@ def updateToNewCompetingProductDailySalesforFiveDays():
         print(
             time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),
             "{}个飙升新品被删除".format(len(newCompetingProductIdDelete)),
-            "{}个热卖产品被添加".format(len(competingProductInfoAdd)),
-            "{}条热卖产品销售数据被添加".format(len(competingProductDailySalesData)),
-            "{}条热卖产品被添加".format(len(competingProductDailySalesforFiveDaysData)),
+            "{}个飙升产品被添加到热卖竞品".format(len(competingProductInfoAdd)),
+            "{}条飙升产品销售数据被添加到热卖竞品".format(len(competingProductDailySalesData)),
+            "{}条飙升产品销售宽表数据被添加热卖竞品".format(len(competingProductDailySalesforFiveDaysData)),
         )
+
 
 def addToinfringeProductinfo(product_id):
     # variable
@@ -382,11 +384,11 @@ def main(productIdlist):
                     )
                 )
                 download_image(result['picUrl'], './static/' + str(result['productId']) + '.jpg')
-        if len(productInfo) % 200 == 0:
+        if len(productInfo) % 200 == 0 and len(productInfo) != 0:
             insertToNewCompetingProductDailySales(productInfo)
             productInfo=[]
         sessionNum+=1
-        if sessionNum % 20 ==0:
+        if sessionNum % 20 ==0 and len(productInfo) != 0:
             session=getSession()
     insertToNewCompetingProductDailySales(productInfo)
     updateToNewCompetingProductDailySalesforFiveDays()
