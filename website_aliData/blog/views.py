@@ -133,8 +133,10 @@ def infringementInfo(request):
 def adminPage(request):
     monitorProducts=competingProductInfo.objects.exclude(tag='')
     monitorProductCountToday=competingProductDailySales.objects.filter(productId__in=monitorProducts,date=datetime.date.today()).count()
+    monitorProductCountFiveDayToday=competingProductDailySalesforFiveDays.objects.filter(productId__in=monitorProducts,date=datetime.date.today()).count()
     competingProducts=competingProductInfo.objects.all()
     competingProductCountToday=competingProductDailySales.objects.filter(date=datetime.date.today()).count()
+    competingProductCountFiveDaysToday=competingProductDailySalesforFiveDays.objects.filter(date=datetime.date.today()).count()
     newCompetingProducts=newCompetingProductInfo.objects.all()
     newCompetingProductCountToday=newCompetingProductDailySales.objects.filter(date=datetime.date.today()).count()
     infringeProducts=infringeProductinfo.objects.filter(been_deleted=1)
@@ -143,8 +145,10 @@ def adminPage(request):
 
     dataset={'monitorProductCount':len(monitorProducts),
              'monitorProductCountToday':monitorProductCountToday,
+             'monitorProductCountFiveDayToday':monitorProductCountFiveDayToday,
              'competingProducts':len(competingProducts),
              'competingProductCountToday': competingProductCountToday,
+             'competingProductCountFiveDaysToday':competingProductCountFiveDaysToday,
              'newCompetingProducts': len(newCompetingProducts),
              'newCompetingProductCountToday': newCompetingProductCountToday,
              'infringeProducts':len(infringeProducts),
