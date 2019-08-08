@@ -75,6 +75,10 @@ def insertToCompetingProductDailySales(productInfo):
     print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),"写入blog_competingProductDailySales表数据{}".format(len(productInfo)))
 
 def updateToCompetingProductDailySalesforFiveDays():
+    '''
+
+    :return:
+    '''
     date=datetime.date.today()
     past1_date=date + datetime.timedelta(days=-1)
     past2_date=date + datetime.timedelta(days=-2)
@@ -85,7 +89,7 @@ def updateToCompetingProductDailySalesforFiveDays():
     past3_data={productInfo['productId']:productInfo['totalSales'] for productInfo in competingProductDailySales.objects.filter(date=past3_date).values('productId','totalSales')}
     past4_data={productInfo['productId']:productInfo['totalSales'] for productInfo in competingProductDailySales.objects.filter(date=past4_date).values('productId','totalSales')}
 
-
+    bulkInsertData=[]
     for product_summary in competingProductDailySales.objects.filter(date=date):
         if (product_summary.productId in past1_data.keys()) and (product_summary.productId in past2_data.keys()) and (product_summary.productId in past3_data.keys()) and (product_summary.productId in past4_data.keys()):
             print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),"开始转换{}热销品近5日销量到宽表".format(product_summary.productId))
@@ -95,7 +99,7 @@ def updateToCompetingProductDailySalesforFiveDays():
             past3_Sales=int(product_summary.totalSales) - past3_data[product_summary.productId]
             past4_Sales=int(product_summary.totalSales) - past4_data[product_summary.productId]
 
-            competingProductDailySalesforFiveDays.objects.update_or_create(
+            bulkInsertData.append(competingProductDailySalesforFiveDays(
                 productId=product_summary.productId,
                 title=product_summary.title,
                 totalSales=product_summary.totalSales,
@@ -117,12 +121,17 @@ def updateToCompetingProductDailySalesforFiveDays():
                 fifthCategory=product_summary.fifthCategory,
                 sixthCategory=product_summary.sixthCategory,
                 seventhCategory=product_summary.seventhCategory,
-                eigthCategory=product_summary.eigthCategory
-        )
+                eigthCategory=product_summary.eigthCategory))
 
             if past4_Sales<5 and competingProductInfo.objects.filter(productId =product_summary.productId).values_list('tag', flat=True)[0] ==None:
                 print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),"{}热销品近5日销量少于5,从列表中剔除".format(product_summary.productId))
                 competingProductInfo.objects.filter(productId =product_summary.productId).delete()
+        if len(bulkInsertData) % 200 == 0:
+            competingProductDailySalesforFiveDays.objects.bulk_create(bulkInsertData)
+            print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),"开始转换{}个热销品近5日销量到宽表".format(len(bulkInsertData)))
+            bulkInsertData=[]
+    competingProductDailySalesforFiveDays.objects.bulk_create(bulkInsertData)
+    print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()), "开始转换{}个热销品近5日销量到宽表".format(len(bulkInsertData)))
 
 def fetch_content(product_id,retry_num,session):   #异步函数
     try:
@@ -288,6 +297,11 @@ def send_mail(Spend_Time):
         ret = False
     return ret
 
+def mkfile():
+    date=datetime.date.today()
+    f=open('./ali_hotsales_log/finish/Ali_hotsales_finish_{}.txt'.format(date), 'w+')
+    f.close()
+
 def main(productIdlist):
     sessionNum=0
     session = getSession()
@@ -340,3 +354,4 @@ if __name__ == '__main__':
     End_Time = time.time()
     Spend_Time = str(round((End_Time - Start_Time) / 60, 2))
     send_mail(Spend_Time)
+    mkfile()

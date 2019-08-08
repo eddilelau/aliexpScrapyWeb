@@ -54,7 +54,6 @@ def getSession():
     session.headers.update(headers)
     return session
 
-
 def download_image(url,file_path):
     #print('正在下载图片', url)
     headers = {
@@ -67,16 +66,15 @@ def download_image(url,file_path):
                 with open(file_path, 'wb') as f:
                     f.write(response.content)
                     f.close()
-                    print('下载图片{}'.format(url))
+                    print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),'下载图片{}'.format(url))
     except requests.RequestException:
-        print('请求图片错误', url)
+        print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),'请求图片错误', url)
 
 def insertToNewCompetingProductDailySales(productInfo):
     newCompetingProductDailySales.objects.bulk_create(productInfo)
     print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),"写入blog_newCompetingProductDailySales表数据{}".format(len(productInfo)))
 
 def updateToNewCompetingProductDailySalesforFiveDays():
-
         date=datetime.date.today()
         past1_date=date + datetime.timedelta(days=-1)
         past2_date=date + datetime.timedelta(days=-2)
@@ -87,6 +85,10 @@ def updateToNewCompetingProductDailySalesforFiveDays():
         past3_data={productInfo['productId']: productInfo['totalSales'] for productInfo in newCompetingProductDailySales.objects.filter(date=past3_date).values('productId', 'totalSales')}
         past4_data={productInfo['productId']: productInfo['totalSales'] for productInfo in newCompetingProductDailySales.objects.filter(date=past4_date).values('productId', 'totalSales')}
 
+        competingProductDailySalesforFiveDaysData=[]
+        competingProductDailySalesData=[]
+        competingProductInfoAdd=[]
+        newCompetingProductIdDelete=[]
         for product_summary in newCompetingProductDailySales.objects.filter(date=date):
             if (product_summary.productId in past1_data.keys()) and (product_summary.productId in past2_data.keys()) and (product_summary.productId in past3_data.keys()) and (product_summary.productId in past4_data.keys()):
                 # calculate pastX_Sales
@@ -97,15 +99,14 @@ def updateToNewCompetingProductDailySalesforFiveDays():
                 # Eliminate competing product
                 if past4_Sales < 5:
                     print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),"{}飙升新品近5日销量少于5,从列表中剔除".format(product_summary.productId))
-                    newCompetingProductInfo.objects.filter(productId=product_summary.productId).delete()
+                    newCompetingProductIdDelete.append(product_summary.productId)
                 # add hot competing product
                 elif past1_Sales>=5 and past2_Sales>=10:
                     print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),"{}飙升新品被添加到热卖产品,并从飙升新品列表中删除".format(product_summary.productId))
-                    competingProductInfo.objects.update_or_create(productId=product_summary.productId)
+                    competingProductInfoAdd.append(competingProductInfo(productId=product_summary.productId))
                     newProductIdFiveDayData=newCompetingProductDailySales.objects.filter(date__range=(past4_date, date),productId=product_summary.productId).order_by('-date')
-                    productDataList=[]
                     for productData in newProductIdFiveDayData:
-                        productDataList.append(competingProductDailySales(
+                        competingProductDailySalesData.append(competingProductDailySales(
                             productId=productData.productId,
                             title=productData.title,
                             totalSales=productData.totalSales,
@@ -125,8 +126,8 @@ def updateToNewCompetingProductDailySalesforFiveDays():
                             seventhCategory=productData.seventhCategory,
                             eigthCategory=productData.eigthCategory,
                         ))
-                    competingProductDailySales.objects.bulk_create(productDataList)
-                    competingProductDailySalesforFiveDays.objects.update_or_create(
+                    competingProductDailySalesforFiveDaysData.append(
+                        competingProductDailySalesforFiveDays(
                         productId=product_summary.productId,
                         title=product_summary.title,
                         totalSales=product_summary.totalSales,
@@ -149,8 +150,36 @@ def updateToNewCompetingProductDailySalesforFiveDays():
                         sixthCategory=product_summary.sixthCategory,
                         seventhCategory=product_summary.seventhCategory,
                         eigthCategory=product_summary.eigthCategory,
-                    )
-                    newCompetingProductInfo.objects.filter(productId = product_summary.productId).delete()
+                    ))
+                    newCompetingProductIdDelete.append(product_summary.productId)
+            if len(newCompetingProductIdDelete) % 200 == 0:
+                newCompetingProductInfo.objects.filter(productId__in=newCompetingProductIdDelete).delete()
+                competingProductInfo.objects.bulk_create(competingProductInfoAdd)
+                competingProductDailySales.objects.bulk_create(competingProductDailySalesData)
+                competingProductDailySalesforFiveDays.objects.bulk_create(competingProductDailySalesforFiveDaysData)
+                print(
+                    time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),
+                    "{}个飙升新品被删除".format(len(newCompetingProductIdDelete)),
+                    "{}个热卖产品被添加".format(len(competingProductInfoAdd)),
+                    "{}条热卖产品销售数据被添加".format(len(competingProductDailySalesData)),
+                    "{}条热卖产品被添加".format(len(competingProductDailySalesforFiveDaysData)),
+                )
+                competingProductDailySalesforFiveDaysData=[]
+                competingProductDailySalesData=[]
+                competingProductInfoAdd=[]
+                newCompetingProductIdDelete=[]
+        newCompetingProductInfo.objects.filter(productId__in=newCompetingProductIdDelete).delete()
+        competingProductInfo.objects.bulk_create(competingProductInfoAdd)
+        competingProductDailySales.objects.bulk_create(competingProductDailySalesData)
+        competingProductDailySalesforFiveDays.objects.bulk_create(competingProductDailySalesforFiveDaysData)
+        print(
+            time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),
+            "{}个飙升新品被删除".format(len(newCompetingProductIdDelete)),
+            "{}个热卖产品被添加".format(len(competingProductInfoAdd)),
+            "{}条热卖产品销售数据被添加".format(len(competingProductDailySalesData)),
+            "{}条热卖产品被添加".format(len(competingProductDailySalesforFiveDaysData)),
+        )
+
 
 def addToinfringeProductinfo(product_id):
     # variable
@@ -229,11 +258,11 @@ def fetch_content(product_id,retry_num,session):   #异步函数
     except (requests.exceptions.ConnectionError,requests.exceptions.SSLError,KeyError) as EX:
         retry_num += 1
         if retry_num <=4:
-            print(EX)
+            print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),EX)
             fetch_content(product_id,retry_num,session)
         else:
-            time.sleep(60*10)
             print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),str(product_id) + '服务器没有响应' + '\n')
+            time.sleep(60*10)
             return product_id
 
 def parseContent(product_id,content):
@@ -309,9 +338,9 @@ def send_mail(Spend_Time):
         server.login(my_sender, my_pass)  # 括号中对应的是发件人邮箱账号、邮箱密码
         server.sendmail(my_sender, [my_user, ], message.as_string())  # 括号中对应的是发件人邮箱账号、收件人邮箱账号、发送邮件
         server.quit()  # 关闭连接
-        print('邮件发送成功')
+        print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),'邮件发送成功')
     except Exception as ex:  # 如果 try 中的语句没有执行，则会执行下面的 ret=False
-        print(ex)
+        print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),ex)
         ret = False
     return ret
 
@@ -365,6 +394,13 @@ def main(productIdlist):
 
 
 if __name__ == '__main__':
+    date=datetime.date.today()
+    while 1:
+        if os.path.exists('./ali_hotsales_log/finish/Ali_hotsales_finish_{}.txt'.format(date)):
+            print("ali_hotsales.py is finished,the script is going on")
+            break
+        print("process ali_hotsales.py is not finish,the script will hang up 5 mins")
+        time.sleep(1)
     Start_Time = time.time()
     productIdlist = list(newCompetingProductInfo.objects.values_list('productId', flat=True))   # 数据库读取产品ID
     main(productIdlist)
