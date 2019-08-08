@@ -127,6 +127,7 @@ def updateToCompetingProductDailySalesforFiveDays():
 def fetch_content(product_id,retry_num,session):   #异步函数
     try:
         _url ='https://www.aliexpress.com/item/Tendway-Magnetic-Bluetooth-Earphones-Sport-Running-Wireless-Stereo-Earbuds-with-Micro-Microphone-for-Climbing-Running-auriculare/{}.html'.format(product_id)
+        time.sleep(2)
         response=session.get(_url)
         content =response.text    #等待直到获取成功
         status  = response.status_code
