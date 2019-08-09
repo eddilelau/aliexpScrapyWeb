@@ -69,7 +69,6 @@ def fetch_content(key_word,page,retry_num,session):   #异步函数
         response=session.get(_url,params=data)
         content =response.text.replace("&quot;","\"")    #等待直到获取成功
         status  = response.status_code
-        print("content",content)
         data_json=json.loads(content)
         if status == 200 and 'items' in data_json:
             productList=[]
