@@ -133,6 +133,7 @@ def send_mail(catelog, Total_time):
 def main():
     catalog_list=[filename[2] for filename in os.walk('./ali_catalog_forlinux_keyword', topdown=False)]
     for catalog in catalog_list[0]:
+        print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())," start crawl catalog",catalog)
         Start_Time = time.time()
         for key_word in open('./ali_catalog_forlinux_keyword/' + catalog).readlines():
             if key_word.strip() not in ['Emergency Button']:
@@ -155,12 +156,13 @@ def main():
                                 bulkUpdate.append(UpdateOne({'productID': product['productId']},{'$set': {'ProductOrder': product['tradeDesc']}}, True))
                         print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),
                                   'Catalog :{}--Keyword:{}--PageNum:{}--Spider Finished'.format(catalog, key_word.replace('\n', ''),page))
-                db[catalog].bulk_write(bulkUpdate)
-                NCPI_list=[]
-                for productId in NCPI_set:
-                    NCPI_item = newCompetingProductInfo(productId=productId)
-                    NCPI_list.append(NCPI_item)
-                saveToSQLite(newCompetingProductInfo,NCPI_list)
+                if len(bulkUpdate) != 0:
+                    db[catalog].bulk_write(bulkUpdate)
+                    NCPI_list=[]
+                    for productId in NCPI_set:
+                        NCPI_item = newCompetingProductInfo(productId=productId)
+                        NCPI_list.append(NCPI_item)
+                    saveToSQLite(newCompetingProductInfo,NCPI_list)
                 print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),'Catalog :{}--Keyword:{}--success insert {} productIds in blog_newCompetingProductInfo ,update {} productInfos in Mongodb'.format(catalog, key_word.replace('\n', ''),len(NCPI_set),len(bulkUpdate)))
 
         End_Time = time.time()
