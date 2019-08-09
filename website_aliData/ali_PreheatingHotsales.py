@@ -269,8 +269,10 @@ def fetch_content(product_id,retry_num,session):   #异步函数
 def parseContent(product_id,content):
     content_gbk=content.encode('utf-8').decode('gbk', 'ignore')
     data_string=re.findall('window.runParams = \{\s*data:(.*?),\s*csrfToken', content_gbk, re.S)[0]
-    data_json=json.loads(data_string)
-    # print(type(data_json),data_string)
+    try:
+        data_json=json.loads(data_string.replace("&",""))
+    except:
+        return "json_decode_error"
     if "formatedActivityPrice" in data_json["priceModule"].keys():
         product_price=data_json["priceModule"]["formatedActivityPrice"]
     else:
@@ -384,6 +386,10 @@ def main(productIdlist):
                     )
                 )
                 download_image(result['picUrl'], './static/' + str(result['productId']) + '.jpg')
+        elif result == "json_decode_error":
+            newCompetingProductInfo.objects.filter(productId=productId).delete()
+            print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),"产品{}json数据出错,直接从newCompetingProductInfo表删除".format(productId))
+
         if len(productInfo) % 200 == 0 and len(productInfo) != 0:
             insertToNewCompetingProductDailySales(productInfo)
             productInfo=[]
