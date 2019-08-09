@@ -14,7 +14,7 @@ import pymongo
 from pymongo import UpdateOne
 from config import *
 from requests import *
-import requests
+import requests.exceptions
 import json
 import json.decoder
 import random
@@ -86,7 +86,8 @@ def fetch_content(key_word,page,retry_num,session):   #异步函数
                 fetch_content(key_word,page, retry_num,session)
             else:
                 return None
-    except (requests.exceptions.ConnectionError,requests.exceptions.SSLError,KeyError,json.decoder) as EX:
+
+    except (requests.exceptions.ConnectionError,requests.exceptions.SSLError,KeyError) as EX:
         retry_num += 1
         if retry_num <=4:
             print(EX)
@@ -132,34 +133,37 @@ def send_mail(catelog, Total_time):
 def main():
     catalog_list=[filename[2] for filename in os.walk('./ali_catalog_forlinux_keyword', topdown=False)]
     for catalog in catalog_list[0]:
+        print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())," start crawl catalog",catalog)
         Start_Time = time.time()
         for key_word in open('./ali_catalog_forlinux_keyword/' + catalog).readlines():
-            competingProductLists=competingProductInfo.objects.all().values_list("productId", flat=True)
-            newCompetingProductInfoLists=newCompetingProductInfo.objects.all().values_list("productId", flat=True)
-            mongodProductInfoList = list(db[catalog].find({},{'productID': 1,'ProductOrder':1}))
-            mongodProductInfoDict = {mongodProductInfoList[i]['productID']:int(mongodProductInfoList[i]['ProductOrder']) for i in range(len(mongodProductInfoList))}
-            print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()), 'Catalog :{}--Keyword:{}--Start Spider!!!! '.format(catalog, key_word.replace('\n', '')))
-            session=getSession()
-            total=30
-            NCPI_set=set()
-            bulkUpdate=[]
-            for page in range(1, total + 1):
-                productList=fetch_content(key_word, page=page,retry_num=1, session=session)
-                if productList:
-                    for product in productList:
-                            if product['productId'] in mongodProductInfoDict.keys() and product['tradeDesc'] - mongodProductInfoDict[product['productId']] >= 5:
-                                if product['productId'] not in competingProductLists and product['productId'] not in newCompetingProductInfoLists:
-                                    NCPI_set.add(product['productId'])
-                            bulkUpdate.append(UpdateOne({'productID': product['productId']},{'$set': {'ProductOrder': product['tradeDesc']}}, True))
-                    print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),
-                              'Catalog :{}--Keyword:{}--PageNum:{}--Spider Finished'.format(catalog, key_word.replace('\n', ''),page))
-            db[catalog].bulk_write(bulkUpdate)
-            NCPI_list=[]
-            for productId in NCPI_set:
-                NCPI_item = newCompetingProductInfo(productId=productId)
-                NCPI_list.append(NCPI_item)
-            saveToSQLite(newCompetingProductInfo,NCPI_list)
-            print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),'Catalog :{}--Keyword:{}--success insert {} productIds in blog_newCompetingProductInfo ,update {} productInfos in Mongodb'.format(catalog, key_word.replace('\n', ''),len(NCPI_set),len(bulkUpdate)))
+            if key_word.strip() not in ['Emergency Button']:
+                competingProductLists=competingProductInfo.objects.all().values_list("productId", flat=True)
+                newCompetingProductInfoLists=newCompetingProductInfo.objects.all().values_list("productId", flat=True)
+                mongodProductInfoList = list(db[catalog].find({},{'productID': 1,'ProductOrder':1}))
+                mongodProductInfoDict = {mongodProductInfoList[i]['productID']:int(mongodProductInfoList[i]['ProductOrder']) for i in range(len(mongodProductInfoList))}
+                print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()), 'Catalog :{}--Keyword:{}--Start Spider!!!! '.format(catalog, key_word.replace('\n', '')))
+                session=getSession()
+                total=30
+                NCPI_set=set()
+                bulkUpdate=[]
+                for page in range(1, total + 1):
+                    productList=fetch_content(key_word, page=page,retry_num=1, session=session)
+                    if productList:
+                        for product in productList:
+                                if product['productId'] in mongodProductInfoDict.keys() and product['tradeDesc'] - mongodProductInfoDict[product['productId']] >= 5:
+                                    if product['productId'] not in competingProductLists and product['productId'] not in newCompetingProductInfoLists:
+                                        NCPI_set.add(product['productId'])
+                                bulkUpdate.append(UpdateOne({'productID': product['productId']},{'$set': {'ProductOrder': product['tradeDesc']}}, True))
+                        print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),
+                                  'Catalog :{}--Keyword:{}--PageNum:{}--Spider Finished'.format(catalog, key_word.replace('\n', ''),page))
+                if len(bulkUpdate) != 0:
+                    db[catalog].bulk_write(bulkUpdate)
+                    NCPI_list=[]
+                    for productId in NCPI_set:
+                        NCPI_item = newCompetingProductInfo(productId=productId)
+                        NCPI_list.append(NCPI_item)
+                    saveToSQLite(newCompetingProductInfo,NCPI_list)
+                print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),'Catalog :{}--Keyword:{}--success insert {} productIds in blog_newCompetingProductInfo ,update {} productInfos in Mongodb'.format(catalog, key_word.replace('\n', ''),len(NCPI_set),len(bulkUpdate)))
 
         End_Time = time.time()
         Total_time = str(round((End_Time - Start_Time) / 60, 2))
