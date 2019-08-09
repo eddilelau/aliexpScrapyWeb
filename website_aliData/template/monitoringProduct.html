@@ -5,10 +5,6 @@
 {% load pagetag %}
 
 <script type="text/javascript">
-
-
-
-
     // 传输删除标签数据
     function transportDeleteProductId(productId) {
         if (!productId) {
@@ -210,14 +206,13 @@
 </script>
 
 
-
-
 <div class="pageheader">
     <form action="/monitoringProduct/" method="get" class="form-horizontal form-bordered" style="padding-left: 20px">
+
         <div class="form-group">
-            <!--分组-->
-            <div class="col-sm-1">
-                <select name="tagID"  style="height: 40px">
+            <!--选标签-->
+            <div class="col-sm-2">
+                <select class="select2" data-placeholder="Choose a Country..." name="tagID"  style="height: 40px">
                     <option >请选择标签</option>
                     {% for tagID in tagsID %}
                     <option value="{{ tagID.name }}">{{ tagID.name }}</option>
@@ -227,8 +222,10 @@
 
 
             <!--日期-->
-            <div class="col-sm-2" style="padding-left: -20px;">
-                <input type="date" name="date" id="date"  value="">
+            <div class="col-md-2" style="padding-left: -20px;">
+                        <div class="input-group">
+                            <input type="text" name="date" class="form-control datepicker-multiple" id="date"  value="">
+                        </div>
             </div>
 
             <div class="col-sm-1" >
@@ -240,10 +237,9 @@
 
 <div class="contentpanel">
 
+<div class="col-md-12">
 
-    <div class="col-md-12">
-
-        <div class="panel-group panel-group-dark" id="accordion2">
+<div class="panel-group panel-group-dark" id="accordion2">
 
             <div class="panel panel-default">
                     <div class="panel-body">
@@ -339,7 +335,7 @@
 
         </div>
 
-    </div>
+</div>
 
 </div><!-- contentpanel -->
 
@@ -442,21 +438,6 @@
     </div>
 </form>
 
-<script type="text/javascript">
-
-    var now = new Date();
-    // alert(now);
-    //格式化日，如果小于9，前面补0
-    var day = ("0" + now.getDate()).slice(-2);
-
-    //格式化月，如果小于9，前面补0
-    var month = ("0" + (now.getMonth() + 1)).slice(-2);
-    //拼装完整日期格式
-    var today = now.getFullYear()+"-"+(month)+"-"+(day) ;
-    // alert(today);
-
-    document.getElementById("date").value=(today);
-</script>
 
 {% endblock %}
 

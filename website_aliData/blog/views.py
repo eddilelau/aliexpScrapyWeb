@@ -20,19 +20,17 @@ import itertools
 def competingSales(request):
     # 展示区
     firstCategorySet=catalog.objects.values_list('firstCategory', flat=True).exclude(firstCategory="").order_by('firstCategory').distinct()
-    print(firstCategorySet)
-    # catalogsID=[{"id":index,"name":ct['firstCategory']} for index,ct in enumerate(firstCategorySet)]
 
-    # 输入区
+    # # 输入区
     firstCategory=request.GET.get("firstCategory", "")
     secondCategory=request.GET.get("secondCategory","")
-    # print(secondCategory,secondCategory== None)
-    dateString=request.GET.get("date", "2018-12-26")
+    dateString=request.GET.get("date", "08/08/2018")
     page=request.GET.get("page",1)
     salesFilter=request.GET.get("salesFilter",0)
     MPFilter=request.GET.get("MPFilter",0)
 
-    date=datetime.datetime.strptime(dateString, "%Y-%m-%d")
+    date=datetime.datetime.strptime(dateString, "%m/%d/%Y")
+    print("date formate {}".format(date))
     productIds=competingProductInfo.objects.filter(tag='')
     if secondCategory != "" and int(salesFilter) == 0:
         productInfo=competingProductDailySalesforFiveDays.objects.filter(firstCategory=firstCategory,secondCategory=secondCategory,date=date).order_by('secondTags','firstTags')
@@ -54,7 +52,10 @@ def competingSales(request):
         pagecontent=paginator.page(1)
     print("从数据库中查询出信息数:", str(len(productInfo)), "现在显示第{}页数据".format(page))
     # print(pagecontent)
-    dataset={"salesFilter":salesFilter,"date": dateString,"firstCategorySet": firstCategorySet,"pagecontent": pagecontent , "totalPages":paginator.num_pages,
+    dataset={
+             "salesFilter":salesFilter,
+              "date": dateString, "firstCategorySet": firstCategorySet,
+              "pagecontent": pagecontent , "totalPages":paginator.num_pages,
              "totaLNumber":len(productInfo),
              "firstCategory":firstCategory.replace(' ','+').replace('&','%26'),
              "secondCategory":secondCategory if secondCategory =="" else secondCategory.replace(' ','+').replace('&','%26')
@@ -86,12 +87,11 @@ def preCompetingsalesData(request):
 
 def infringeProductInfo(request):
     # 展示区
-    dateString=request.GET.get("date", "2018-12-26")
+    dateString=request.GET.get("date", "08/09/2018")
+    date=datetime.datetime.strptime(dateString, "%m/%d/%Y")
     needDate=request.GET.get("needDate",1)
     page=request.GET.get("page", 1)
-    print("needDate",needDate)
     if needDate==1:
-        date=datetime.datetime.strptime(dateString, "%Y-%m-%d")
         productInfo=infringeProductinfo.objects.filter(updateDate=date,been_deleted=1).order_by('catalog')
     else:
         productInfo=infringeProductinfo.objects.filter(been_deleted=1).order_by('updateDate')
@@ -163,18 +163,11 @@ def monitoringProduct(request):
 
     # 数据查询
     tagID=request.GET.get("tagID",None)
-    dateString=request.GET.get('date',default="2019-04-03")
-    date=datetime.datetime.strptime(dateString, "%Y-%m-%d")
-    print(tagID)
-
+    dateString=request.GET.get('date',default="04/03/2019")
+    date=datetime.datetime.strptime(dateString, "%m/%d/%Y")
     productIdSet=competingProductInfo.objects.filter(tag=tagID).values_list('productId',flat=True)
-    QuerySets=[]
-    for productId in productIdSet:
-        if competingProductDailySalesforFiveDays.objects.filter(productId=productId,date=date).exists():
-            productInfo=competingProductDailySalesforFiveDays.objects.filter(productId=productId,date=date)[0]
-            print(productInfo.productId)
-            QuerySets.append(productInfo)
-
+    QuerySets=list(competingProductDailySalesforFiveDays.objects.filter(productId__in=productIdSet, date=date).order_by('-past1_Sales'))
+    print("QuerySets",len(QuerySets))
 
     dataset={'tagsID':tagsID,'QuerySets':QuerySets}
     return render(request,"monitoringProduct.html",dataset)

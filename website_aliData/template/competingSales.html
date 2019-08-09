@@ -262,9 +262,14 @@
                     <label class="col-sm-3">一级类目</label>
                     <br>
                     <div class="col-sm-3" style="width: 100%">
-                        <select name="firstCategory" onchange="reloadSecondCategory(this);"
+                        <select class="select2" name="firstCategory" onchange="reloadSecondCategory(this);"
                                 style="height: 40px;">
-                            <option value="">请选择(必选)...</option>
+                            {% if firstCategory != "" %}
+                                   <option value="{{ firstCategory }}">{{ firstCategory }}</option>
+                             {% else %}
+                                   <option value="">请选择(必选)...</option>
+                             {% endif %}
+
                             {% for firstCategory in firstCategorySet %}
                             <option value="{{ firstCategory }}">{{ firstCategory }}</option>
                             {% endfor %}
@@ -272,21 +277,25 @@
                     </div>
                 </div>
                 <!--二级类目-->
-                <div class="form-group col-sm-3">
+                <div class="form-group col-sm-3" style="padding-left: 30px">
                     <label class="col-sm-3">二级类目</label>
                     <br>
-                    <div class="col-sm-3" style="width: 90%">
-                        <select name="secondCategory" id="secondCategory" style="height: 40px;width: 90%">
-                            <option value="">请选择(非必选)...</option>
+                    <div class="col-sm-3" style="width: 100%">
+                        <select class="select2" name="secondCategory" id="secondCategory" style="height: 40px;width: 90%">
+                            {% if secondCategory != "" %}
+                                   <option value="{{ secondCategory }}">{{ secondCategory|escape }}</option>
+                             {% else %}
+                                   <option value="">请选择(必选)...</option>
+                             {% endif %}
                         </select>
                     </div>
                 </div>
                 <!--日期-->
-                <div class="form-group col-sm-3">
+                <div class="form-group col-sm-2" style="padding-left: 30px">
                     <label class="col-sm-3">日期</label>
                     <br>
                     <div class="col-sm-3" style="width: 90%">
-                        <input type="date" name="date" id="date">
+                        <input type="text" name="date" class="form-control datepicker-multiple" id="date" value="">
                     </div>
                 </div>
             </div>
