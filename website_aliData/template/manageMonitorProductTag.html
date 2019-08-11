@@ -1,0 +1,405 @@
+{% extends 'base.html' %}
+{% block content %}
+    <script type="text/javascript">
+        // 传输删除标签数据
+        function transportDeleteMonitoringTag(tag) {
+            if (!tag) {
+            alert('标签为空！');
+            return false;
+        }
+            $.ajax(
+            {
+                url: "/checkMonitorTag",
+                data: {"tag": tag},
+                type: "post",
+                beforeSend: function () {
+                    return true;
+                },
+                success: function (data) {
+                    if (data) {
+                        // 解析json数据
+                        data = JSON.parse(data);
+                        // 赋值;
+                        var comment = data["comment"];
+                        var tag = data["tag"];
+                        $("#deleteMonitorTag").val(tag);
+                        // 将元素设置为readonly
+                        $("#deleteMonitorTag").attr("readonly", "readonly");
+                        $("#deletecomment").val(comment);
+                        $("#deletecomment").attr("readonly", "readonly");
+                    } else {
+                        alert('操作失败');
+                    }
+                },
+                error: function () {
+                    alert('请求出错');
+                },
+                complete: function () {
+                }
+            });
+
+            return false;
+
+    }
+
+        // 传输更改标签数据
+        function transportUpdateMonitoringTag(tag) {
+            if (!tag) {
+            alert('标签为空！');
+            return false;
+        }
+            $.ajax(
+            {
+                url: "/checkMonitorTag",
+                data: {"tag": tag},
+                type: "post",
+                beforeSend: function () {
+                    return true;
+                },
+                success: function (data) {
+                    if (data) {
+                        // 解析json数据
+                        data = JSON.parse(data);
+                        // 赋值;
+                        var comment = data["comment"];
+                        var tag = data["tag"];
+                        $("#updateMonitorTag").val(tag);
+                        // 将元素设置为readonly
+                        $('#updateMonitorTag').attr("readonly", "readonly");
+                        $("#updateComment").val(comment);
+                    } else {
+                        alert('操作失败');
+                    }
+                },
+                error: function () {
+                    alert('请求出错');
+                },
+                complete: function () {
+                }
+            });
+            return false;
+
+    }
+
+        //提交增加监控标签表单
+        function addMonitorTags() {
+            var addMonitorTag = $.trim($('#addMonitorTag').val());
+            var addComment = $.trim($('#addComment').val());
+            var add_act = $.trim($('#add_act').val());
+            if (!addMonitorTag) {
+                alert('监控标签不能为空！');
+                return false;
+            }
+            var fields = $("#add_monitor_tag_form_data").serializeArray();
+            fields = JSON.stringify(fields);  //中文会乱码
+
+            $.ajax(
+                {
+                    type: "POST",
+                    url: "/modifyMonitorTag",
+                    data: {"form_data": fields, "act": add_act},
+
+                    beforeSend: function () {
+                        return true;
+                    },
+                    success: function (data) {
+                        if (data == 0) {
+                            alert("监控标签已经存在！")
+                            location.reload();
+                        } else {
+                            var msg = "添加";
+                            alert(msg + "成功!" + data);
+                            location.reload();
+                        }
+                    },
+                    error: function () {
+                        alert('请求出错');
+                    },
+                    complete: function () {
+                    }
+                });
+
+            return false;
+
+        }
+
+        //提交删除监控标签表单
+        function deleteMonitorTags() {
+            var deleteMonitorTag = $.trim($('#deleteMonitorTag').val());
+            var deletecomment = $.trim($('#deletecomment').val());
+            var delete_act = $.trim($('#delete_act').val());
+
+            if (!deleteMonitorTag) {
+                alert('监控标签不能为空！');
+                return false;
+            }
+            var fields = $("#delete_monitor_tag_form_data").serializeArray();
+            fields = JSON.stringify(fields) ; //中文会乱码
+            //alert(fields);
+            // 异步提交数据到
+            $.ajax(
+                {
+                    type: "POST",
+                    url: "/modifyMonitorTag",
+                    data: {"form_data": fields, "act": delete_act},
+
+                    beforeSend: function () {
+                        return true;
+                    },
+                    success: function (data) {
+                        if (data == 0) {
+                            alert("监控标签不存在！已经删除了")
+                            location.reload();
+                        } else {
+                            var msg = "删除";
+                            alert(msg + "成功!" + data);
+                            location.reload();
+                        }
+                    },
+                    error: function () {
+                        alert('请求出错');
+                    },
+                    complete: function () {
+                    }
+                });
+
+            return false;
+        }
+
+        //提交修改监控标签表单
+        function updateMonitorTags(num) {
+            var updateMonitorTag = $.trim($('#updateMonitorTag').val());
+            var updateComment = $.trim($('#updateComment').val());
+            var update_act = $.trim($('#update_act').val());
+            alert(num);
+
+
+            if (!updateMonitorTag) {
+                alert('监控标签不能为空！');
+                return false;
+            }
+            var fields = $("#update_monitor_tag_form_data").serializeArray();
+            fields = JSON.stringify(fields); //中文会乱码
+            // 异步提交数据到
+            $.ajax(
+                {
+                    type: "POST",
+                    url: "/modifyMonitorTag",
+                    data: {"form_data": fields, "act": update_act},
+
+                    beforeSend: function () {
+                        return true;
+                    },
+                    success: function (data) {
+                        if (data == 0) {
+                            alert("监控标签不存在！已经删除了");
+                            location.reload();
+                        } else {
+                            var msg = "修改";
+                            alert(msg + "成功!" + data);
+                            location.reload();
+                        }
+                    },
+                    error: function () {
+                        alert('请求出错');
+                    },
+                    complete: function () {
+                    }
+                });
+
+            return false;
+        }
+
+        模态框隐藏时触发该事件
+        $(function () {
+            $('#addMonitorTagModal').on('hide.bs.modal', function () {
+                // 关闭时清空edit状态为add
+                location.reload();
+            });
+            $('#deleteMonitorTagModal').on('hide.bs.modal', function () {
+                // 关闭时清空edit状态为add
+                location.reload();
+            });
+            $('#updateProductTagModal').on('hide.bs.modal', function () {
+                // 关闭时清空edit状态为add
+                location.reload();
+            });
+        });
+    </script>
+
+    <div class="pageheader">
+        <div class="row" style="height: 60px">
+            <div class="col-sm-2 " style="padding-left: 30px;padding-top: 10px">
+                <button id="btnEdit" type="button" class="btn btn-success" data-toggle="modal"
+                        data-target="#addMonitorTagModal">
+                        添加监控标签
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="contentpanel">
+
+            <div class="panel panel-default">
+                <div class="panel-body">
+                    <div class="table-responsive">
+                        <table class="table" id="table1">
+                            <thead>
+                            <tr>
+                                <th style="text-align: center">监控标签</th>
+                                <th style="text-align: center">评注</th>
+                                <th style="text-align: center">操作</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {% for item in data %}
+                                <tr class="table-striped">
+                                    <td style="text-align: center">{{ item.tag }}</td>
+                                    <td style="text-align: center">{{ item.comment }}</td>
+                                    <td style="text-align: center">
+                                        <button id="btnEdit" type="button" class="btn btn-danger" data-toggle="modal"
+                                                data-target="#deleteMonitorTagModal" onclick="return transportDeleteMonitoringTag( '{{ item.tag }}' )">
+                                            <span class="glyphicon glyphicon-trash" aria-hidden="true"></span>删除监控标签
+                                        </button>
+                                        <button id="btnEdit" type="button" class="btn btn-warning" data-toggle="modal"
+                                                data-target="#updateProductTagModal" onclick="return transportUpdateMonitoringTag( '{{ item.tag }}' )">
+                                            <span class="glyphicon glyphicon-edit" aria-hidden="true"></span>修改监控标签
+                                        </button>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div><!-- table-responsive -->
+                    <div class="clearfix mb30"></div>
+
+
+                </div><!-- panel-body -->
+            </div><!-- panel -->
+
+        </div><!-- contentpanel -->
+
+    <form class="form-horizontal" role="form" method="post" id="add_monitor_tag_form_data" onsubmit="return addMonitorTags()">
+        <div class="modal fade" id="addMonitorTagModal" role="table">
+            <div class="modal-dialog" style="width:500px;">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">
+                            &times;
+                        </button>
+                        <h4 class="modal-title" id="addMonitorTagModal">
+                            添加监控标签
+                        </h4>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" id="add_act" value="add"/>
+                        <div class="form-group" style="margin-left: 50px">
+                            <label class="col-sm-4 control-label">监控标签(必填)</label>
+                            <div class="col-sm-8">
+                                <input type="text" class="form-control" style="width: 150px" id="addMonitorTag" name="addMonitorTag" placeholder="MP_XX_01">
+                            </div>
+                        </div>
+                        <div class="form-group" style="margin-left: 50px">
+                            <label class="col-sm-4 control-label">注释(选填)</label>
+                            <div class="col-sm-8">
+                                <input type="text" class="form-control" style="width: 150px" id="addComment" name="addComment" placeholder="添加监控标签注释">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                        <button type="submit" class="btn btn-success" id="btn_submit">
+                            提交
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <form class="form-horizontal" role="form" method="post" id="update_monitor_tag_form_data" onsubmit="return updateMonitorTags()">
+        <div class="modal fade" id="updateProductTagModal" role="table">
+            <div class="modal-dialog" style="width:500px;">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">
+                            &times;
+                        </button>
+                        <h4 class="modal-title" id="updateProductTagModal">
+                            添加监控标签
+                        </h4>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" id="update_act" value="update"/>
+                        <div class="form-group" style="margin-left: 50px">
+                            <label class="col-sm-4 control-label">监控标签(必填)</label>
+                            <div class="col-sm-8">
+                                <input type="text" class="form-control" style="width: 150px" id="updateMonitorTag" name="updateMonitorTag">
+                            </div>
+                        </div>
+                        <div class="form-group" style="margin-left: 50px">
+                            <label class="col-sm-4 control-label">注释(选填)</label>
+                            <div class="col-sm-8">
+                                <input type="text" class="form-control" style="width: 150px" id="updateComment"
+                                       name="updateComment">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">取消
+                        </button>
+                        <button type="submit" class="btn btn-warning" id="btn_submit">
+                            确认修改
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <form class="form-horizontal" role="form" method="post" id="delete_monitor_tag_form_data" onsubmit="return deleteMonitorTags()">
+        <div class="modal fade" id="deleteMonitorTagModal" role="table">
+            <div class="modal-dialog" style="width:500px;">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">
+                            &times;
+                        </button>
+                        <h4 class="modal-title" id="deleteMonitorTagModal">
+                            删除监控标签
+                        </h4>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" id="delete_act" value="delete"/>
+                        <div class="form-group" style="margin-left: 50px">
+                            <label class="col-sm-4 control-label">监控标签(必填)</label>
+                            <div class="col-sm-8">
+                                <input type="text" class="form-control" style="width: 150px" id="deleteMonitorTag"
+                                       name="deleteMonitorTag"
+                                       placeholder="添加类目">
+                            </div>
+                        </div>
+                        <div class="form-group" style="margin-left: 50px">
+                            <label class="col-sm-4 control-label">注释(选填)</label>
+                            <div class="col-sm-8">
+                                <input type="text" class="form-control" style="width: 150px" id="deletecomment"
+                                       name="deletecomment"
+                                       placeholder="添加监控标签注释">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">取消
+                        </button>
+                        <button type="submit" class="btn btn-danger" id="btn_submit">
+                            确认删除
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+
+
+{% endblock %}
+

@@ -27,18 +27,11 @@
                         data = JSON.parse(data);
                         // 赋值;
                         var id = data["productId"];
-                        var catalogs = data["catalogs"];
                         var dir = "{{ STATIC_URL }}" + id + ".jpg";
-                        var html = "<option value=''>-请选择标签-</option>";
                         $("#productId").val(id);
                         // 将元素设置为readonly
-                        $('#productId').attr("readonly", "readonly")
+                        $('#productId').attr("readonly", "readonly");
                         $("#img_id").attr("src", dir);
-                        for (var i = 0; i < catalogs.length; i++) {
-                            html += "<option value=\"" + catalogs[i] + "\">" + catalogs[i] + "</option> ";
-                        }
-                        $('#catalogID').html(html)
-
                         //修改文本框的属性为disabled,不能在页面上更改文本框内容
                         // {#$('#productId').attr("disabled", true)#}
                         // location.reload();
@@ -53,94 +46,6 @@
                 }
             });
 
-        return false;
-    }
-
-    //加载类目标签
-    function reloadTags(ths) {
-        var catalog = $(ths).val();
-        // alert(catalog);
-        if (!catalog) {
-            alert("获取不了类目名称");
-            return false;
-        }
-
-        $.ajax({
-            url: '/reloadTags',
-            type: 'post',
-            data: {"catalog": catalog},
-            beforeSend: function () {
-                return true
-            },
-            success: function (data) {
-                if (data) {
-                    data = JSON.parse(data);
-                    // 赋值
-                    var tags = data['firstTags'];
-                    var catalog = data['catalog'];
-                    // alert(tags);
-                    var html = "<option value=''>-请选择标签-</option>";
-                    for (var i = 0; i < tags.length; i++) {
-                        html += "<option value=\"" + catalog + "$" + tags[i] + "\">" + tags[i] + "</option>";
-                    }
-                    $('#firstTags').html(html);
-                    // alert(html);
-
-                } else {
-                    alert('获取标签失败');
-                }
-            },
-            error: function () {
-                alert('请求出错！');
-            },
-            complete: function () {
-
-            }
-        });
-        return false;
-    }
-
-    //加载标签
-    function reloadSecondTags(ths) {
-        var firstTags = $(ths).val();
-        // alert(catalog);
-        if (!firstTags) {
-            alert("获取不了第一标签名称");
-            return false;
-        }
-
-
-        $.ajax({
-            url: '/reloadSecondTags',
-            type: 'post',
-            data: {"firstTags": firstTags},
-            beforeSend: function () {
-                return true
-            },
-            success: function (data) {
-                if (data) {
-                    data = JSON.parse(data);
-                    // 赋值
-                    var tags = data['secondTags'];
-                    // alert(tags);
-                    var html = "<option value=''>-请选择标签-</option>";
-                    for (var i = 0; i < tags.length; i++) {
-                        html += "<option value=\"" + tags[i] + "\">" + tags[i] + "</option>";
-                    }
-                    $('#secondTags').html(html);
-                    // alert(html);
-
-                } else {
-                    alert('获取标签失败');
-                }
-            },
-            error: function () {
-                alert('请求出错！');
-            },
-            complete: function () {
-
-            }
-        });
         return false;
     }
 
@@ -187,9 +92,46 @@
         return false;
     }
 
+    //加载标签注释
+    function reloadComment(ths) {
+        var tagText = $(ths).val();
+        if (!tagText) {
+            alert("获取不了监控标签");
+            return false;
+        }
+
+        $.ajax({
+            url: '/reloadMonitorTagComment',
+            type: 'post',
+            data: {"tagText": tagText},
+            beforeSend: function () {
+                return true
+            },
+            success: function (data) {
+                if (data) {
+                    data = JSON.parse(data);
+                    // 赋值
+                    var Monitorcomment = data['comment'];
+                    $('#comment').attr("readonly", "");
+                    $('#comment').val(Monitorcomment);
+                    $('#comment').attr("readonly", "readonly");
+
+                } else {
+                    alert('获取监控标签注释失败');
+                }
+            },
+            error: function () {
+                alert('请求出错！');
+            },
+            complete: function () {
+
+            }
+        });
+        return false;
+    }
+
     //提交表单
     function check_form() {
-        var regPos = /^\d+(\.\d+)?$/; //非负浮点数
         var productId = $.trim($('#productId').val());
         var tags = $.trim($('#tag').val());
         var act = $.trim($('#act').val());
@@ -199,10 +141,7 @@
         } else if (!tags) {
             alert('请输入标签！');
             return false;
-        } else if (!regPos.test(tags)) {
-            alert('输入不正确,不是数字');
-            return false;
-        }else if (act == "edit") {
+        } else if (act == "edit") {
             alert('动作为修改,非添加！');
             return false;
         }
@@ -211,10 +150,11 @@
         fields = JSON.stringify(fields)  //中文会乱码
         // alert(fields);
         // 异步提交数据到
+        alert(fields);
         $.ajax(
             {
                 type: "POST",
-                url: "/addProduct",
+                url: "/addMonitorProduct",
                 data: {"form_data": fields, "act": act},
 
                 beforeSend: function () {
@@ -262,10 +202,9 @@
                     <label class="col-sm-3">一级类目</label>
                     <br>
                     <div class="col-sm-3" style="width: 100%">
-                        <select class="select2" name="firstCategory" onchange="reloadSecondCategory(this);"
-                                style="height: 40px;">
-                            {% if firstCategory != "" %}
-                                   <option value="{{ firstCategory }}">{{ firstCategory }}</option>
+                        <select class="select2" name="firstCategory" onclick="reloadSecondCategory(this);" style="height: 40px;">
+                            {% if firstCategory_select != "" %}
+                                   <option value="{{ firstCategory_select }}">{{ firstCategory_select }}</option>
                              {% else %}
                                    <option value="">请选择(必选)...</option>
                              {% endif %}
@@ -282,8 +221,8 @@
                     <br>
                     <div class="col-sm-3" style="width: 100%">
                         <select class="select2" name="secondCategory" id="secondCategory" style="height: 40px;width: 90%">
-                            {% if secondCategory != "" %}
-                                   <option value="{{ secondCategory }}">{{ secondCategory|escape }}</option>
+                            {% if secondCategory_select != "" %}
+                                   <option value="{{ secondCategory_select }}">{{ secondCategory_select }}</option>
                              {% else %}
                                    <option value="">请选择(必选)...</option>
                              {% endif %}
@@ -410,7 +349,6 @@
                             </button>
                         </td>
                     </tr>
-
                     {% else %}
                     <tr>
                         <td><a href="https://www.aliexpress.com/item/Summer/{{ i.productId }}.html"
@@ -525,12 +463,22 @@
                     </div>
                     <div class="form-group" style="margin-left: 50px">
                         <label class="col-sm-4 control-label">监控标签</label>
-                        <div class="col-sm-8">
-                            <div class="input-group mb15">
-                                <span class="input-group-addon">MP</span>
-                                <input type="number" class="form-control" style="width: 150px" id="tag" name="tag"
-                                       placeholder="请填写数字">
-                            </div>
+                        <div class="col-sm-6">
+                            <select class="select2" data-placeholder="Choose a Country..." onclick="reloadComment(this);" name="tag" id="tag"
+                                    style="height: 40px">
+                                <option value="">请选择监控标签</option>
+                                {% for tagID in tagsID %}
+                                    <option value="{{ tagID }}">{{ tagID }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group" style="margin-left: 50px">
+                        <label class="col-sm-4 control-label">标签注释</label>
+                        <div class="col-sm-6">
+                            <input type="text" class="form-control" style="width: 150px" id="comment"
+                                   name="comment"
+                                   placeholder="" readonly="readonly">
                         </div>
                     </div>
                 </div>

@@ -65,16 +65,37 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'django.template.context_processors.static',
-    
+
             ],
             'libraries': {
                              'set_val': 'templatetags.set_val',
                              'pagetag':'templatetags.circlePage',
-
                          }
         },
     },
 ]
+
+# TEMPLATES = [
+#     {
+#         'BACKEND': 'django.template.backends.jinja2.Jinja2',
+#         'DIRS': [BASE_DIR,'template/'],
+#         'APP_DIRS': True,
+#         'OPTIONS': {
+#             'context_processors': [
+#                 'django.template.context_processors.debug',
+#                 'django.template.context_processors.request',
+#                 'django.contrib.auth.context_processors.auth',
+#                 'django.contrib.messages.context_processors.messages',
+#                 'django.template.context_processors.static',
+#
+#             ],
+#             'environment': 'blog.jinja2_env.environment',
+#
+#     },
+#     },
+# ]
+
+
 
 WSGI_APPLICATION = 'aliData.wsgi.application'
 

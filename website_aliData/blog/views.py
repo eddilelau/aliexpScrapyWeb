@@ -20,6 +20,8 @@ import itertools
 def competingSales(request):
     # 展示区
     firstCategorySet=catalog.objects.values_list('firstCategory', flat=True).exclude(firstCategory="").order_by('firstCategory').distinct()
+    tagsID=monitorProductTag.objects.values_list('tag',flat=True).exclude(tag="").distinct()
+
 
     # # 输入区
     firstCategory=request.GET.get("firstCategory", "")
@@ -27,7 +29,7 @@ def competingSales(request):
     dateString=request.GET.get("date", "08/08/2018")
     page=request.GET.get("page",1)
     salesFilter=request.GET.get("salesFilter",0)
-    MPFilter=request.GET.get("MPFilter",0)
+    print("firstCategory",firstCategory,"secondCategory",secondCategory)
 
     date=datetime.datetime.strptime(dateString, "%m/%d/%Y")
     print("date formate {}".format(date))
@@ -51,39 +53,18 @@ def competingSales(request):
     except PageNotAnInteger:
         pagecontent=paginator.page(1)
     print("从数据库中查询出信息数:", str(len(productInfo)), "现在显示第{}页数据".format(page))
-    # print(pagecontent)
     dataset={
              "salesFilter":salesFilter,
               "date": dateString, "firstCategorySet": firstCategorySet,
               "pagecontent": pagecontent , "totalPages":paginator.num_pages,
              "totaLNumber":len(productInfo),
+            "firstCategory_select":firstCategory,
+            "secondCategory_select":secondCategory,
              "firstCategory":firstCategory.replace(' ','+').replace('&','%26'),
-             "secondCategory":secondCategory if secondCategory =="" else secondCategory.replace(' ','+').replace('&','%26')
+             "secondCategory":secondCategory if secondCategory =="" else secondCategory.replace(' ','+').replace('&','%26'),
+            "tagsID":tagsID,
              }
     return render(request,"competingSales.html", dataset)
-
-def preCompetingsalesData(request):
-    # 展示区
-    # catalog = request.POST.get("catalogID", "earphone")
-    # print("获得类目参数:" + catalog)
-    dateString=request.GET.get('date', default="2019-04-03")
-    page=request.GET.get('page',default=1)
-    date=datetime.datetime.strptime(dateString, "%Y-%m-%d")
-    productInfo=preCompetingProductDailySales.objects.filter(date=date)
-    paginator=Paginator(productInfo, 30, 0)
-    try:
-        pagecontent=paginator.page(page)
-    except EmptyPage:
-        pagecontent=paginator.page(paginator.num_pages)
-    except PageNotAnInteger:
-        pagecontent=paginator.page(1)
-    print("从数据库中查询出信息数:",str(len(productInfo)),"现在显示第{}页数据".format(page))
-    # for i in pagecontent.object_list:
-    #     print(i.productId)
-
-
-    dataset={"date":dateString, "pagecontent": pagecontent,"totalPages":paginator.num_pages,"totaLNumber":len(productInfo)}
-    return render(request, "preCompetingsalesData.html", dataset)
 
 def infringeProductInfo(request):
     # 展示区
@@ -108,21 +89,13 @@ def infringeProductInfo(request):
     dataset={'date':dateString, "pagecontent": pagecontent,'needDate':needDate,'totaLNumber':len(productInfo)}
     return render(request, "infringeProductInfo.html", dataset)
 
-def catalogAndTags(request):
-    #获取catalogs列表
-    catalogs = catalogAndtags.objects.values_list('catalog',flat=True).order_by('catalog').distinct()
-    #查询结果
-    catalog=request.GET.get('catalog',None)
-    if catalog == None:
-        data = catalogAndtags.objects.all()
-    else:
-        data = catalogAndtags.objects.filter(catalog=catalog).order_by('firstTags')
-
-    result = {"data":data,"catalogs":catalogs,"totaLNumber":len(data),"catalog":catalog}
-
-    # result = {"pagecontent":pagecontent,"catalogs":catalogs,"totaLNumber":len(data),"catalog":catalog}
-    print("从数据库中查询出信息数:", str(len(data)),)
-    return render(request,"catalogAndTags.html",result)
+def manageMonitorProductTag(request):
+    '''
+    manageMoniterProductTag
+    '''
+    data = monitorProductTag.objects.all()
+    result = {"data":data,"totaLNumber":len(data)}
+    return render(request,"manageMonitorProductTag.html",result)
 
 def readMe(request):
     return render(request,'readMe.html')
@@ -158,63 +131,82 @@ def adminPage(request):
 
 def monitoringProduct(request):
     # 查询框
-    tags=tag.objects.values('tag').exclude(tag="").distinct()
-    tagsID=[{"id":index,"name":ct['tag']} for index,ct in enumerate(tags)]
+    tagsID=monitorProductTag.objects.values_list('tag',flat=True).exclude(tag="").distinct()
 
-    # 数据查询
-    tagID=request.GET.get("tagID",None)
-    dateString=request.GET.get('date',default="04/03/2019")
+    # select some tag
+    tagID=request.GET.get("tagID","brief")
+    dateString=request.GET.get('date',default=(datetime.date.today()).strftime("%m/%d/%Y"))
     date=datetime.datetime.strptime(dateString, "%m/%d/%Y")
-    productIdSet=competingProductInfo.objects.filter(tag=tagID).values_list('productId',flat=True)
-    QuerySets=list(competingProductDailySalesforFiveDays.objects.filter(productId__in=productIdSet, date=date).order_by('-past1_Sales'))
-    print("QuerySets",len(QuerySets))
+    print(tagID,dateString,date)
+    if tagID == 'brief'and competingProductDailySalesforFiveDays.objects.filter(date=date):
+        tags=competingProductInfo.objects.values_list('tag', flat=True).distinct()
+        tagsInfo={item['tag']: item['comment'] for item in monitorProductTag.objects.filter(tag__in=tags).values('tag', 'comment')}
+        tagsProducts={key: competingProductInfo.objects.filter(tag=key).values_list('productId', flat=True) for key,value in tagsInfo.items() }
+        print("tagsInfo",len(tagsInfo),"tagsProducts",len(tagsProducts))
+        tagsBestSales={
+            tag: competingProductDailySalesforFiveDays.objects.filter(productId__in=productIds,date=date).order_by('-past1_Sales')[0] for tag, productIds in tagsProducts.items()
+        }
 
-    dataset={'tagsID':tagsID,'QuerySets':QuerySets}
+        tagTables=[]
+        for tag in tagsInfo.keys():
+            tagTables.append(
+                {
+                    'tag': tag,
+                    'comment': tagsInfo[tag],
+                    'productIdNum': len(tagsProducts[tag]) or 0 ,
+                    'max_productId': tagsBestSales[tag].productId or 0,
+                    'max_productId_totalSales': tagsBestSales[tag].totalSales or 0,
+                    'max_productId_totalEvaluation': tagsBestSales[tag].totalEvaluation or 0,
+                    'max_productId_past1_Sales': tagsBestSales[tag].past1_Sales or 0,
+                    'max_productId_past2_Sales': tagsBestSales[tag].past2_Sales or 0,
+                    'max_productId_past3_Sales': tagsBestSales[tag].past3_Sales or 0,
+                    'max_productId_past4_Sales': tagsBestSales[tag].past4_Sales or 0,
+
+                }
+            )
+        dataset={'tagsID':tagsID,'QuerySets':tagTables,'chooseTagID':tagID,'date':dateString}
+    else:
+        productIdSet=competingProductInfo.objects.filter(tag=tagID).values_list('productId',flat=True)
+        QuerySets=list(competingProductDailySalesforFiveDays.objects.filter(productId__in=productIdSet, date=date).order_by('-past1_Sales'))
+        dataset={'tagsID':tagsID,'QuerySets':QuerySets,'chooseTagID':tagID}
     return render(request,"monitoringProduct.html",dataset)
 
-def competingProductList(request):
-    # 展示区
-    catalog=request.GET.get("catalogID", None)
-    page=request.GET.get("page",1)
-
-    productInfo=competingProductInfo.objects.filter(catalog=catalog).order_by('firstTags','secondTags')
-    print("从数据库中查询出信息数:" + str(len(productInfo)))
-    catalogSet=catalogAndtags.objects.values('catalog').order_by('catalog').distinct()
-    catalogID=[{"id":index,"name":ct['catalog']} for index,ct in enumerate(catalogSet)]
-    paginator=Paginator(productInfo, 50, 0)
-    try:
-        pagecontent=paginator.page(page)
-    except EmptyPage:
-        pagecontent=paginator.page(paginator.num_pages)
-    except PageNotAnInteger:
-        pagecontent=paginator.page(1)
-    print("从数据库中查询出信息数:", str(len(productInfo)), "现在显示第{}页数据".format(page))
-    # print(pagecontent)
-    dataset={"catalogID": catalogID, "pagecontent": pagecontent ,"totalPages":paginator.num_pages,'totaLNumber':len(productInfo),"currentCatalog":catalog}
-    return render(request, "competingProductList.html", dataset)
 
 #ajax
 def checkProductId(request):
     if request.method == "POST":
         productId = request.POST.get("productId")
-        print(productId)
+        # print(productId)
         tag=competingProductInfo.objects.filter(productId=productId).values_list('tag',flat=True)[0]
-        print(tag)
         return HttpResponse(json.dumps({"productId":productId,"tag":tag}))
 
-def addTags(request):
+def addMonitorProduct(request):
     if request.method == "POST":
-        Catalog = request.POST.get("addCatalog")
-        firstTags = request.POST.get("addFirstTags")
-        SecondTags= request.POST.get("addSecondTags","")
+        form_data = request.POST.get("form_data")
+        act = request.POST.get("act","")
+        data=json.loads(str(form_data))  # 将JSON格式的数据转化为Python中的dict时，应使用loads：
+        dic={}
+        for item in data:
+            dic[item['name']]=item['value']
+        if act == "add" and competingProductInfo.objects.filter(productId=int(dic.get("productId"))).exists():
+            competingProductInfo.objects.filter(productId=int(dic.get("productId"))).update(tag=str(dic.get("tag")))
+            return HttpResponse("ok")
 
-    if catalogAndtags.objects.filter(catalog=Catalog, firstTags=firstTags,secondTags=SecondTags).exists():
-        return HttpResponse(0)
+def deleteProduct(request):
+    productId=request.POST.get('productId')
+    if newCompetingProductInfo.objects.filter(productId=productId).exists():
+        newCompetingProductInfo.objects.filter(productId=productId).delete()
+        return HttpResponse("OK")
     else:
-        catalogAndtags.objects.get_or_create(catalog=Catalog, firstTags=firstTags, secondTags=SecondTags)
-        return HttpResponse("ok")
+        return HttpResponse(0)
 
-def addProduct(request):
+def checkMonitorTag(request):
+    if request.method == "POST":
+        tag = request.POST.get("tag")
+        tagInformation=list(monitorProductTag.objects.filter(tag=tag).values('tag','comment'))[0]
+        return HttpResponse(json.dumps({"comment":tagInformation['comment'],"tag":tagInformation['tag']}))
+
+def changeMonitorProductTag(request):
     # return HttpResponse("ok")
 
     if request.method == "POST":
@@ -225,35 +217,44 @@ def addProduct(request):
         dic={}
         for item in data:
             dic[item['name']]=item['value']
-
         if act == "add" or act == "update":
             print("add_product_tag========" + act)
-            competingProductInfo.objects.filter(productId=dic.get("productId")).update(tag=str("MP"+dic.get("tag")))
-            tagsName=competingProductInfo.objects.all().values_list('tag', flat=True).distinct()
-            for tagName in tagsName:
-                tag.objects.update_or_create(tag=tagName)
+            competingProductInfo.objects.filter(productId=dic.get("productId")).update(tag=str(dic.get("tag")))
             return HttpResponse("ok")
         elif act == "delete":
             print("delete_product_tag========" + act)
             competingProductInfo.objects.filter(productId=dic.get("deleteProductId")).update(tag="")
-            tagsName=competingProductInfo.objects.all().values_list('tag', flat=True).distinct()
-            for tagName in tagsName:
-                tag.objects.update_or_create(tag=tagName)
             return HttpResponse("ok")
 
+def modifyMonitorTag(request):
+    if request.method == "POST":
+        form_data = request.POST.get("form_data","")
+        print("form_data",form_data)
+        act = request.POST.get("act","")
+        data=json.loads(str(form_data))  # 将JSON格式的数据转化为Python中的dict时，应使用loads：
+        dic={}
+        for item in data:
+            dic[item['name']]=item['value']
 
-
-def reloadTags(request):
-    catalog=request.POST.get("catalog"), #这里注意ajax传进来的是一个元组
-    firstTags=list(catalogAndtags.objects.filter(catalog=catalog[0]).values_list('firstTags',flat=True).distinct().order_by('firstTags'))
-    return HttpResponse(json.dumps({"firstTags":firstTags,"catalog":catalog}))
-
-def reloadSecondTags(request):
-    catalog_tags=request.POST.get("firstTags"), #这里注意ajax传进来的是一个元组
-    catalog=catalog_tags[0].split('$')[0]
-    tags=catalog_tags[0].split('$')[1]
-    secondTags=list(catalogAndtags.objects.filter(catalog=catalog,firstTags=tags).values_list('secondTags',flat=True).order_by('secondTags'))
-    return HttpResponse(json.dumps({"secondTags":secondTags}))
+        if act == "add":
+            print("add_MonitorTag========" + act)
+            if monitorProductTag.objects.filter(tag=dic.get("addMonitorTag")).exists():
+                return HttpResponse(0)
+            else:
+                print(dic, dic.get("updateMonitorTag"), dic.get("addComment"))
+                monitorProductTag.objects.create(tag=dic.get("addMonitorTag"),comment=dic.get("addComment"))
+                return HttpResponse("ok")
+        elif act == "update":
+            print("update_MonitorTag========" + act)
+            monitorProductTag.objects.filter(tag=dic.get("updateMonitorTag")).update(comment=dic.get("updateComment"))
+            return HttpResponse("ok")
+        elif act == "delete":
+            print("delete_MonitorTag========" + act)
+            if monitorProductTag.objects.filter(tag=dic.get("deleteMonitorTag")).exists():
+                monitorProductTag.objects.filter(tag=dic.get("deleteMonitorTag")).delete()
+                return HttpResponse("ok")
+            else:
+                return HttpResponse(0)
 
 def reloadSecondCategory(request):
     firstCategory=request.POST.get("firstCategory"), #这里注意ajax传进来的是一个元组
@@ -263,75 +264,19 @@ def reloadSecondCategory(request):
 
     return HttpResponse(json.dumps({"secondCategorys":secondCategorys}))
 
-def deleteTag(request):
-    id=request.POST.get("id")
-    if catalogAndtags.objects.filter(id=id).exists():
-        catalogAndtags.objects.filter(id=id).delete()
-        return HttpResponse("ok")
-    return HttpResponse("0")
-
-def deleteProduct(request):
-    productId=request.POST.get('productId')
-    if newCompetingProductInfo.objects.filter(productId=productId).exists():
-        newCompetingProductInfo.objects.filter(productId=productId).delete()
-        return HttpResponse("OK")
+def reloadMonitorTagComment(request):
+    tagText=request.POST.get("tagText") #这里注意ajax传进来的是一个元组
+    if monitorProductTag.objects.filter(tag=tagText).values_list('comment',flat=True)[0] =="":
+        return HttpResponse(json.dumps({"comment": ""}))
     else:
-        return HttpResponse(0)
+        comment=monitorProductTag.objects.filter(tag=tagText).values_list('comment',flat=True)
+        return HttpResponse(json.dumps({"comment": comment[0]}))
+
+
 
 
 # 下载类
 
-def download_preCompeting(request):
-    dateString=request.GET.get('date', default="2019-04-03")
-    date=datetime.datetime.strptime(dateString, "%Y-%m-%d")
-
-    # 设置HTTPResponse的类型
-    response=HttpResponse(content_type='application/vnd.ms-excel')
-    response['Content-Disposition']='attachment;filename={}.xls'.format("listing")
-    # 创建一个文件对象
-    wb=xlwt.Workbook(encoding='utf8')
-    # 创建一个sheet对象
-    sheet=wb.add_sheet('order-sheet')
-    # 写入文件标题
-    sheet.write(0, 0, '产品ID')
-    sheet.write(0, 1, '总销量')
-    sheet.write(0, 2, '总评价数')
-    sheet.write(0, 3, '统计日期')
-    sheet.write(0, 4, '标题')
-    sheet.write(0, 5, '产品评分')
-    sheet.write(0, 6, '产品价格')
-    sheet.write(0, 7, '图片地址')
-    sheet.write(0, 8, '类目')
-    sheet.write(0, 9, '近1天销量')
-    sheet.write(0, 10, '近2天销量')
-    sheet.write(0, 11, '近3天销量')
-    sheet.write(0, 12, '近4天销量')
-
-
-    data_row = 1
-    for i in preCompetingProductDailySales.objects.filter(date=date):
-        sheet.write(data_row,0,i.productId)
-        sheet.write(data_row,1,i.totalSales)
-        sheet.write(data_row,2,i.totalEvaluation)
-        sheet.write(data_row,3,i.date.strftime('%Y-%m-%d'))
-        sheet.write(data_row,4,i.title)
-        sheet.write(data_row,5,i.productScore)
-        sheet.write(data_row,6,i.price)
-        sheet.write(data_row,7,i.picUrl)
-        sheet.write(data_row,8,i.catalog)
-        sheet.write(data_row,9,i.past1_Sales)
-        sheet.write(data_row,10,i.past2_Sales)
-        sheet.write(data_row,11,i.past3_Sales)
-        sheet.write(data_row,12,i.past4_Sales)
-        data_row = data_row + 1
-
-    # 写出到IO
-    output=BytesIO()
-    wb.save(output)
-    # 重新定位到开始
-    output.seek(0)
-    response.write(output.getvalue())
-    return response
 
 def download_competingSales(request):
     catalog=request.GET.get("catalogID", None)

@@ -11,17 +11,9 @@ from django.db import models
 
 
 
-class tag(models.Model):
-    tag=models.CharField(max_length=128, null=True)
-
-class catalogAndtags(models.Model):
-    catalog = models.CharField(max_length=32)
-    firstTags = models.CharField(max_length=128)
-    secondTags = models.CharField(max_length=128,null=True)
-    def __str__(self):
-        return self.catalog
-class Meta:
-    unique_together = ('catalog', 'tags',)
+class monitorProductTag(models.Model):
+    tag=models.CharField(max_length=128,primary_key=True,default='')
+    comment=models.CharField(max_length=128, default='')
 
 class catalog(models.Model):
     home = models.CharField(max_length=128,default='')
@@ -140,27 +132,3 @@ class newCompetingProductDailySales(models.Model):
     seventhCategory = models.CharField(max_length=128,default='')
     eigthCategory = models.CharField(max_length=128,default='')
 
-class preCompetingProductDailySales(models.Model):
-    productId = models.BigIntegerField(64)
-    totalSales = models.IntegerField()
-    totalEvaluation = models.IntegerField()
-    date = models.DateField()
-    title = models.CharField(max_length=500)
-    productScore = models.CharField(max_length=8)
-    price = models.CharField(max_length=64)
-    picUrl = models.CharField(max_length=256)
-    catalog = models.CharField(max_length=64)
-    past1_Sales = models.IntegerField(default=0)
-    past2_Sales = models.IntegerField(default=0)
-    past3_Sales=models.IntegerField(default=0)
-    past4_Sales=models.IntegerField(default=0)
-    home = models.CharField(max_length=128,default='')
-    allCategories = models.CharField(max_length=128,default='')
-    firstCategory = models.CharField(max_length=128,default='')
-    secondCategory = models.CharField(max_length=128,default='')
-    thirdCategory = models.CharField(max_length=128,default='')
-    fourthCategory = models.CharField(max_length=128,default='')
-    fifthCategory = models.CharField(max_length=128,default='')
-    sixthCategory = models.CharField(max_length=128,default='')
-    seventhCategory = models.CharField(max_length=128,default='')
-    eigthCategory = models.CharField(max_length=128,default='')

@@ -23,26 +23,21 @@ from django.conf.urls import include, url
 urlpatterns = [
     # ajax
     url(r'^checkProductId', views.checkProductId),
-    url(r'^addProduct', views.addProduct),
-    url(r'^addTags', views.addTags),
+    url(r'^changeMonitorProductTag', views.changeMonitorProductTag),
     url(r'^deleteProduct', views.deleteProduct),
-    url(r'^reloadTags', views.reloadTags),
-    url(r'^reloadSecondTags', views.reloadSecondTags),
     url(r'^reloadSecondCategory', views.reloadSecondCategory),
-    url(r'^deleteTag', views.deleteTag),
+    url(r'^checkMonitorTag', views.checkMonitorTag),
+    url(r'^modifyMonitorTag', views.modifyMonitorTag),
 
     # url
     path('', views.adminPage),
     path('competingSales/', views.competingSales),
-    path('preCompetingsalesData/', views.preCompetingsalesData),
-    path('competingProductList/', views.competingProductList),
     path('infringeProductInfo/', views.infringeProductInfo),
     path('monitoringProduct/', views.monitoringProduct),
     path('readMe/',views.readMe),
     path('infringementInfo/',views.infringementInfo),
-    path('download_preCompeting/',views.download_preCompeting),
     path('download_competingSales/', views.download_competingSales),
     path('download_infring/', views.download_infring),
-    path('catalogAndTags/',views.catalogAndTags)
+    path('manageMonitorProductTag/',views.manageMonitorProductTag)
 
 ]

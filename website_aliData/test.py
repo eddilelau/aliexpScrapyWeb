@@ -9,12 +9,14 @@ from blog.models import *
 import pymongo
 from config import *
 import datetime
+from pymongo import UpdateOne
+from django.db.models import Count
 
 
-yesterday=datetime.date.today() - datetime.timedelta(days=1)
+client = pymongo.MongoClient(MONGO_URI)
+db = client[MONGO_DB_otherSale]
 
+tag='MP1'
+tagInformation=list(monitorProductTag.objects.filter(tag=tag).values('tag', 'comment'))[0]
 
-
-print(yesterday)
-
-print(datetime.date.today().replace(day=datetime.date.today().day - 1))
+print("tag",tag)
