@@ -57,6 +57,7 @@
                         <li><a href="/competingSales/" target="_blank"><i class="fa fa-caret-right"></i> 热卖产品</a></li>
                         <li><a href="/monitoringProduct/" target="_blank"><i class="fa fa-caret-right"></i> 监控产品</a></li>
                         <li><a href="/infringeProductInfo/" target="_blank"><i class="fa fa-caret-right"></i> 疑侵权产品</a></li>
+                        <li><a href="/manageMonitorProductTag/" target="_blank"><i class="fa fa-caret-right"></i> 监控产品标签</a></li>
                         <!--<li><a href="/catalogAndTags/"><i class="fa fa-caret-right"></i> 类目与标签</a></li>-->
                         <!--<li><a href="/competingProductList/"><i class="fa fa-caret-right"></i> 热卖产品列表</a></li>-->
                     </ul>
@@ -102,20 +103,59 @@
     </div><!-- mainpanel -->
 
 </section>
-
-
 <script src="../static/js/jquery-1.11.1.min.js"></script>
 <script src="../static/js/jquery-migrate-1.2.1.min.js"></script>
+<script src="../static/js/jquery-ui-1.10.3.min.js"></script>
 <script src="../static/js/bootstrap.min.js"></script>
 <script src="../static/js/modernizr.min.js"></script>
+<script src="../static/js/jquery.autogrow-textarea.js"></script>
+<script src="../static/js/bootstrap-timepicker.min.js"></script>
+<script src="../static/js/jquery.maskedinput.min.js"></script>
+<script src="../static/js/jquery.tagsinput.min.js"></script>
+<script src="../static/js/jquery.mousewheel.js"></script>
+
 <script src="../static/js/jquery.sparkline.min.js"></script>
 <script src="../static/js/toggles.min.js"></script>
 <script src="../static/js/retina.min.js"></script>
 <script src="../static/js/jquery.cookies.js"></script>
 <script src="../static/js/jquery.datatables.min.js"></script>
 <script src="../static/js/select2.min.js"></script>
+<script src="../static/js/dropzone.min.js"></script>
+<script src="../static/js/colorpicker.js"></script>
+
 <script src="../static/js/custom.js"></script>
 
+<script type="text/javascript">
+
+    var now = new Date();
+    // alert(now);
+    //格式化日，如果小于9，前面补0
+    var day = ("0" + now.getDate()).slice(-2);
+
+    //格式化月，如果小于9，前面补0
+    var month = ("0" + (now.getMonth() + 1)).slice(-2);
+    //拼装完整日期格式
+    var today = (month)+"/"+(day)+"/"+now.getFullYear();
+    // alert(today);
+
+    document.getElementById("date").value=(today);
+</script>
+
+<script>
+jQuery(document).ready(function(){
+  // Select2
+  jQuery(".select2").select2({
+    width: '100%'
+  });
+
+  // Date Picker
+  jQuery('.datepicker-multiple').datepicker({
+    numberOfMonths: 2,
+    showButtonPanel: false
+  });
+
+});
+</script>
 </body>
 </html>
 
