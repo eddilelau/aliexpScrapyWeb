@@ -28,6 +28,8 @@ urlpatterns = [
     url(r'^reloadSecondCategory', views.reloadSecondCategory),
     url(r'^checkMonitorTag', views.checkMonitorTag),
     url(r'^modifyMonitorTag', views.modifyMonitorTag),
+    url(r'^addMonitorProduct', views.addMonitorProduct),
+    url(r'^reloadMonitorTagComment', views.reloadMonitorTagComment),
 
     # url
     path('', views.adminPage),
