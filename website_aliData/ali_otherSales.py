@@ -74,7 +74,7 @@ async def getData(productId,try_num):
                 for otherSales in otherSalesList:
                     productID=otherSales['productId']  # 已确认空格被清除
                     if productID in mongodProductInfoDict.keys() and (int(otherSales['totalTranpro3']) - int(mongodProductInfoDict[productID])) >= 5:
-                        if productID in competingProductLists:
+                        if productID not in competingProductLists:
                             NCPI_set.add(productID)
                     bulkUpdate.append(UpdateOne({'productID': productID}, { '$set': {'ProductOrder': otherSales['totalTranpro3'],'ProductReview': otherSales['itemEvalTotalNum']}}, True))
                 db['otherSales'].bulk_write(bulkUpdate)
