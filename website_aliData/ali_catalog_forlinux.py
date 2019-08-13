@@ -134,12 +134,7 @@ def send_mail(catelog, Total_time):
         return False
 
 def main():
-    # catalog_list=[filename[2] for filename in os.walk('./ali_catalog_forlinux_keyword', topdown=False)]
-    catalog_list=[[
-        'mouse.txt',
-        'mouse_pads.txt',
-        'Plotters.txt',
-    ]]
+    catalog_list=[filename[2] for filename in os.walk('./ali_catalog_forlinux_keyword', topdown=False)]
     for catalog in catalog_list[0]:
         print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())," start crawl catalog",catalog)
         Start_Time = time.time()
