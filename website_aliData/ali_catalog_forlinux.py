@@ -69,7 +69,10 @@ def fetch_content(key_word,page,retry_num,session):   #异步函数
         response=session.get(_url,params=data)
         content =response.text.replace("&quot;","\"")    #等待直到获取成功
         status  = response.status_code
-        data_json=json.loads(content)
+        try:
+            data_json=json.loads(content)
+        except:
+            return "json_decode_error"
         if status == 200 and 'items' in data_json:
             productList=[]
             for i in range(len(data_json['items'])):
@@ -131,7 +134,12 @@ def send_mail(catelog, Total_time):
         return False
 
 def main():
-    catalog_list=[filename[2] for filename in os.walk('./ali_catalog_forlinux_keyword', topdown=False)]
+    # catalog_list=[filename[2] for filename in os.walk('./ali_catalog_forlinux_keyword', topdown=False)]
+    catalog_list=[[
+        'mouse.txt',
+        'mouse_pads.txt',
+        'Plotters.txt',
+    ]]
     for catalog in catalog_list[0]:
         print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())," start crawl catalog",catalog)
         Start_Time = time.time()
@@ -148,7 +156,7 @@ def main():
                 bulkUpdate=[]
                 for page in range(1, total + 1):
                     productList=fetch_content(key_word, page=page,retry_num=1, session=session)
-                    if productList:
+                    if type(productList) is list:
                         for product in productList:
                                 if product['productId'] in mongodProductInfoDict.keys() and product['tradeDesc'] - mongodProductInfoDict[product['productId']] >= 5:
                                     if product['productId'] not in competingProductLists and product['productId'] not in newCompetingProductInfoLists:
