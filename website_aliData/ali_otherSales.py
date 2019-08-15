@@ -58,6 +58,7 @@ async def getData(productId,try_num):
             'User-Agent': getRandomAgent(),
         }
         url = "https://gpsfront.aliexpress.com/getI2iRecommendingResults.do?currentItemList={}&shopId=1718464&companyId=233056744&recommendType=toOtherSeller&scenario=pcDetailBottomMoreOtherSeller&limit=30&offset=0&callback=__jp7".format(productId)
+        # time.sleep(2)
         async with aiohttp.ClientSession() as session:
             async with session.get(url,headers =header) as response:
                 response,status = await response.text(),response.status
@@ -70,11 +71,11 @@ async def getData(productId,try_num):
                 bulkUpdate=[]
                 mongodProductInfoList=list(db['otherSales'].find({}, {'productID': 1, 'ProductOrder': 1}))
                 mongodProductInfoDict={mongodProductInfoList[i]['productID']: int(mongodProductInfoList[i]['ProductOrder']) for i in range(len(mongodProductInfoList))}
-                competingProductLists=competingProductInfo.objects.all().values_list("productId", flat=True)
+                newCompetingProductLists=newCompetingProductInfo.objects.all().values_list("productId", flat=True)
                 for otherSales in otherSalesList:
                     productID=otherSales['productId']  # 已确认空格被清除
                     if productID in mongodProductInfoDict.keys() and (int(otherSales['totalTranpro3']) - int(mongodProductInfoDict[productID])) >= 5:
-                        if productID not in competingProductLists:
+                        if productID not in newCompetingProductLists:
                             NCPI_set.add(productID)
                     bulkUpdate.append(UpdateOne({'productID': productID}, { '$set': {'ProductOrder': otherSales['totalTranpro3'],'ProductReview': otherSales['itemEvalTotalNum']}}, True))
                 db['otherSales'].bulk_write(bulkUpdate)
@@ -142,7 +143,6 @@ def main(scrapyProduct):
     asyncio.set_event_loop(loop)
     tasks = [asyncio.ensure_future(getData(product,try_num= 1)) for product in scrapyProduct]
     loop.run_until_complete(asyncio.wait(tasks))
-
 
 if __name__ == '__main__':
     Start_Time = time.time()
