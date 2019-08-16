@@ -10,11 +10,13 @@ import pymongo
 from config import *
 import datetime
 
+client = pymongo.MongoClient(MONGO_URI)
+db = client[MONGO_DB_otherSale]
 
-yesterday=datetime.date.today() - datetime.timedelta(days=1)
+productIds =[33018221306,33048641947]
+pId =[]
+for productId in productIds:
+    pId.append(competingProductInfo(productId=productId))
 
-
-
-print(yesterday)
-
-print(datetime.date.today().replace(day=datetime.date.today().day - 1))
+newCompetingProductInfo.objects.bulk_create(pId)
+print("insert success!")
