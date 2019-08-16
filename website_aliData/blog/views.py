@@ -72,7 +72,8 @@ def infringeProductInfo(request):
     date=datetime.datetime.strptime(dateString, "%m/%d/%Y")
     needDate=request.GET.get("needDate",1)
     page=request.GET.get("page", 1)
-    if needDate==1:
+
+    if int(needDate)==1:
         productInfo=infringeProductinfo.objects.filter(updateDate=date,been_deleted=1).order_by('catalog')
     else:
         productInfo=infringeProductinfo.objects.filter(been_deleted=1).order_by('updateDate')
