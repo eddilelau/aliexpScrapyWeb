@@ -146,10 +146,10 @@ def fetch_content(product_id,retry_num,session):   #异步函数
                 return parseContent(product_id, content=content)
             else:
                 # print(content_gbk)
-                print("{}产品没返回正确数据:暂停30s".format(product_id))
+                print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),"{}产品没返回正确数据:暂停30s".format(product_id))
                 return product_id
         elif status ==404:
-            print("产品ID:{},服务器找不到产品详情,重试{}".format(product_id,retry_num))
+            print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),"产品ID:{},服务器找不到产品详情,重试{}".format(product_id,retry_num))
             retry_num+=1
             if retry_num <= 4:
                 fetch_content(product_id, retry_num,session)
@@ -159,11 +159,11 @@ def fetch_content(product_id,retry_num,session):   #异步函数
     except (requests.exceptions.ConnectionError,requests.exceptions.SSLError,KeyError) as EX:
         retry_num += 1
         if retry_num <=4:
-            print(EX)
+            print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),EX)
             fetch_content(product_id,retry_num,session)
         else:
-            time.sleep(60*10)
-            print(str(product_id) + '服务器没有响应' + '\n')
+            # time.sleep(60*10)
+            print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),str(product_id) + '服务器没有响应' + '\n')
             return product_id
 
 def addToinfringeProductinfo(product_id):
@@ -296,7 +296,7 @@ def send_mail(Spend_Time):
         server.quit()  # 关闭连接
         print('邮件发送成功')
     except Exception as ex:  # 如果 try 中的语句没有执行，则会执行下面的 ret=False
-        print(ex)
+        print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),ex)
         ret = False
     return ret
 
@@ -310,13 +310,13 @@ def main(productIdlist):
     session = getSession()
     productInfo=[]
     while productIdlist:
-        productId=productIdlist.pop()
+        productId=productIdlist.pop(0)  #FIFO
         print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),"开始爬虫{}".format(productId),"等待爬虫产品数据为{}".format(len(productIdlist)))
         result=fetch_content(productId, retry_num=1,session=session)
         if type(result) is int:
             productIdlist.append(productId)
             print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),"产品{}爬虫失败,返回消息列表".format(productId), "等待爬虫产品数据为{}".format(len(productIdlist)))
-            time.sleep(10*random.randint(1,6))
+            time.sleep(random.randint(1,6))
         elif type(result) is dict:
             productInfo.append(
                 competingProductDailySales(
@@ -344,7 +344,7 @@ def main(productIdlist):
         if len(productInfo) % 200 ==0:
             insertToCompetingProductDailySales(productInfo)
             productInfo=[]
-        if sessionNum % 20 ==0:
+        if sessionNum % 5 ==0 and len(productInfo) != 0:
             session=getSession()
         sessionNum+=1
     insertToCompetingProductDailySales(productInfo)

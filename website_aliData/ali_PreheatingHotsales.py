@@ -263,7 +263,7 @@ def fetch_content(product_id,retry_num,session):   #异步函数
             fetch_content(product_id,retry_num,session)
         else:
             print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),str(product_id) + '服务器没有响应' + '\n')
-            time.sleep(60*10)
+            # time.sleep(60*10)
             return product_id
 
 def parseContent(product_id,content):
@@ -352,7 +352,7 @@ def main(productIdlist):
     session = getSession()
     productInfo=[]
     while productIdlist:
-        productId=productIdlist.pop()
+        productId=productIdlist.pop(0)  #FIFO
         print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),"开始爬虫{}".format(productId),"等待爬虫产品数据为{}".format(len(productIdlist)))
         result=fetch_content(productId, retry_num=1,session=session)
         if type(result) is int:
@@ -394,7 +394,7 @@ def main(productIdlist):
             insertToNewCompetingProductDailySales(productInfo)
             productInfo=[]
         sessionNum+=1
-        if sessionNum % 20 ==0 and len(productInfo) != 0:
+        if sessionNum % 4 ==0 and len(productInfo) != 0:
             session=getSession()
     insertToNewCompetingProductDailySales(productInfo)
     updateToNewCompetingProductDailySalesforFiveDays()
@@ -404,10 +404,10 @@ if __name__ == '__main__':
     date=datetime.date.today()
     while 1:
         if os.path.exists('./ali_hotsales_log/finish/Ali_hotsales_finish_{}.txt'.format(date)):
-            print("ali_hotsales.py is finished,the script is going on")
+            print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),"ali_hotsales.py is finished,the script is going on")
             break
-        print("process ali_hotsales.py is not finish,the script will hang up 5 mins")
-        time.sleep(1)
+        print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),"process ali_hotsales.py is not finish,the script will hang up 5 mins")
+        time.sleep(60*5)
     Start_Time = time.time()
     productIdlist = list(newCompetingProductInfo.objects.values_list('productId', flat=True))   # 数据库读取产品ID
     main(productIdlist)
