@@ -277,7 +277,10 @@ def parseContent(product_id,content):
         product_price=data_json["priceModule"]["formatedActivityPrice"]
     else:
         product_price=data_json["priceModule"]["formatedPrice"]
-    IF_New_User_BONUS=1 if data_json["priceModule"]["activityMessage"] == 'New User BONUS' else 0
+    if "activityMessage" in data_json["priceModule"].keys():
+        IF_New_User_BONUS=1 if data_json["priceModule"]["activityMessage"] == 'New User BONUS' else 0
+    else:
+        IF_New_User_BONUS=0
     product_Score=data_json["titleModule"]["feedbackRating"]["averageStar"]
     productReviews=data_json["titleModule"]["feedbackRating"]["totalValidNum"]
     product_order=data_json["titleModule"]["tradeCount"]
