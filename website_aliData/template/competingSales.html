@@ -314,6 +314,7 @@
                         <th style="text-align: center">产品ID</th>
                         <th style="width:80px;text-align: center">产品图片</th>
                         <th style="width:100px;text-align: center">价格</th>
+                        <th style="width:100px;text-align: center">New User BONUS</th>
                         <th style="text-align: center">总评分</th>
                         <th style="text-align: center">总评价</th>
                         <th style="text-align: center">总销量</th>
@@ -334,6 +335,11 @@
                         <td><img src="{{ STATIC_URL }}{{i.productId}}.jpg" width="80" height="80" alt="图片无法显示">
                         </td>
                         <td>{{ i.price }}</td>
+                        {% if item.IF_New_User_BONUS == '1' %}
+                            <td><font color="yellow">Y</font></td>
+                        {% else %}
+                            <td></td>
+                        {% endif %}
                         <td>{{ i.productScore }}</td>
                         <td>{{ i.totalEvaluation }}</td>
                         <td>{{ i.totalSales }}</td>
@@ -362,6 +368,11 @@
                             </a>
                         </td>
                         <td>{{ i.price }}</td>
+                        {% if item.IF_New_User_BONUS == '1' %}
+                            <td>Y</td>
+                        {% else %}
+                            <td></td>
+                        {% endif %}
                         <td>{{ i.productScore }}</td>
                         <td>{{ i.totalEvaluation }}</td>
                         <td>{{ i.totalSales }}</td>
