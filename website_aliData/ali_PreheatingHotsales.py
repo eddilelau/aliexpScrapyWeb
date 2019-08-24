@@ -117,6 +117,7 @@ def updateToNewCompetingProductDailySalesforFiveDays():
                             picUrl=productData.picUrl,
                             date=productData.date,
                             home=productData.home,
+                            IF_New_User_BONUS=productData.IF_New_User_BONUS,
                             allCategories=productData.allCategories,
                             firstCategory=productData.firstCategory,
                             secondCategory=productData.secondCategory,
@@ -142,6 +143,7 @@ def updateToNewCompetingProductDailySalesforFiveDays():
                         past3_Sales=past3_Sales,
                         past4_Sales=past4_Sales,
                         home=product_summary.home,
+                        IF_New_User_BONUS=product_summary.IF_New_User_BONUS,
                         allCategories=product_summary.allCategories,
                         firstCategory=product_summary.firstCategory,
                         secondCategory=product_summary.secondCategory,
@@ -180,7 +182,6 @@ def updateToNewCompetingProductDailySalesforFiveDays():
             "{}条飙升产品销售数据被添加到热卖竞品".format(len(competingProductDailySalesData)),
             "{}条飙升产品销售宽表数据被添加热卖竞品".format(len(competingProductDailySalesforFiveDaysData)),
         )
-
 
 def addToinfringeProductinfo(product_id):
     # variable
@@ -277,6 +278,7 @@ def parseContent(product_id,content):
         product_price=data_json["priceModule"]["formatedActivityPrice"]
     else:
         product_price=data_json["priceModule"]["formatedPrice"]
+    IF_New_User_BONUS=1 if data_json["priceModule"]["activityMessage"] == 'New User BONUS' else 0
     product_Score=data_json["titleModule"]["feedbackRating"]["averageStar"]
     productReviews=data_json["titleModule"]["feedbackRating"]["totalValidNum"]
     product_order=data_json["titleModule"]["tradeCount"]
@@ -299,6 +301,7 @@ def parseContent(product_id,content):
         'picUrl': product_img,
         'catalog': product_catalog[0] if len(product_catalog) >= 1 else "",
         'home': Home[0] if len(Home) >= 1 else "",
+        'IF_New_User_BONUS': IF_New_User_BONUS,
         'allCategories': allCategories[0] if len(allCategories) >= 1 else "",
         'firstCategory': product_catalog[0] if len(product_catalog) >= 1 else "",
         'secondCategory': product_catalog[1] if len(product_catalog) >= 2 else "",
@@ -374,6 +377,7 @@ def main(productIdlist):
                         picUrl=result['picUrl'],
                         date=result['date'],
                         home=result['home'],
+                        IF_New_User_BONUS=result['IF_New_User_BONUS'],
                         allCategories=result['allCategories'],
                         firstCategory=result['firstCategory'],
                         secondCategory=result['secondCategory'],
