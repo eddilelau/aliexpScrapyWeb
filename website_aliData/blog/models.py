@@ -10,7 +10,6 @@ from django.db import models
 #         return self.title
 
 
-
 class monitorProductTag(models.Model):
     tag=models.CharField(max_length=128,primary_key=True,default='')
     comment=models.CharField(max_length=128, default='')
@@ -51,6 +50,7 @@ class competingProductDailySales(models.Model):
     picUrl = models.CharField(max_length=256)
     catalog = models.CharField(max_length=64,default='')
     home = models.CharField(max_length=128,default='')
+    IF_New_User_BONUS = models.CharField(max_length=128,default='')
     allCategories = models.CharField(max_length=128,default='')
     firstCategory = models.CharField(max_length=128,default='')
     secondCategory = models.CharField(max_length=128,default='')
@@ -78,6 +78,7 @@ class competingProductDailySalesforFiveDays(models.Model):
     past3_Sales= models.IntegerField(default=0)
     past4_Sales= models.IntegerField(default=0)
     home = models.CharField(max_length=128,default='')
+    IF_New_User_BONUS = models.CharField(max_length=128,default='')
     allCategories = models.CharField(max_length=128,default='')
     firstCategory = models.CharField(max_length=128,default='')
     secondCategory = models.CharField(max_length=128,default='')
@@ -122,6 +123,7 @@ class newCompetingProductDailySales(models.Model):
     picUrl = models.CharField(max_length=256)
     catalog = models.CharField(max_length=64)
     home = models.CharField(max_length=128,default='')
+    IF_New_User_BONUS = models.CharField(max_length=128,default='')
     allCategories = models.CharField(max_length=128,default='')
     firstCategory = models.CharField(max_length=128,default='')
     secondCategory = models.CharField(max_length=128,default='')
