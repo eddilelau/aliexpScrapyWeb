@@ -335,8 +335,8 @@
                         <td><img src="{{ STATIC_URL }}{{i.productId}}.jpg" width="80" height="80" alt="图片无法显示">
                         </td>
                         <td>{{ i.price }}</td>
-                        {% if item.IF_New_User_BONUS == '1' %}
-                            <td><font color="yellow">Y</font></td>
+                        {% if i.IF_New_User_BONUS == '1' %}
+                            <td>Y</td>
                         {% else %}
                             <td></td>
                         {% endif %}
@@ -368,7 +368,7 @@
                             </a>
                         </td>
                         <td>{{ i.price }}</td>
-                        {% if item.IF_New_User_BONUS == '1' %}
+                        {% if i.IF_New_User_BONUS == '1' %}
                             <td>Y</td>
                         {% else %}
                             <td></td>
