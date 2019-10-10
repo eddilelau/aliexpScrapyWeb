@@ -37,11 +37,11 @@ def competingSales(request):
     if secondCategory != "" and int(salesFilter) == 0:
         productInfo=competingProductDailySalesforFiveDays.objects.filter(firstCategory=firstCategory,secondCategory=secondCategory,date=date).order_by('secondTags','firstTags')
     elif secondCategory != "" and int(salesFilter) == 1:
-        productInfo=competingProductDailySalesforFiveDays.objects.filter(firstCategory=firstCategory,secondCategory=secondCategory,date=date,productId__in=productIds).extra(where=["past1_Sales>4"]).order_by('secondTags','firstTags')
+        productInfo=competingProductDailySalesforFiveDays.objects.filter(firstCategory=firstCategory,secondCategory=secondCategory,date=date,productId__in=productIds).extra(where=["past1_Sales>20"]).order_by('secondTags','firstTags')
     elif secondCategory == "" and int(salesFilter) == 0:
         productInfo=competingProductDailySalesforFiveDays.objects.filter(firstCategory=firstCategory,date=date).order_by('secondTags','firstTags')
     elif secondCategory == "" and int(salesFilter) == 1:
-        productInfo=competingProductDailySalesforFiveDays.objects.filter(firstCategory=firstCategory,date=date,productId__in=productIds).extra(where=["past1_Sales>4"]).order_by('secondTags','firstTags')
+        productInfo=competingProductDailySalesforFiveDays.objects.filter(firstCategory=firstCategory,date=date,productId__in=productIds).extra(where=["past1_Sales>20"]).order_by('secondTags','firstTags')
 
     print("从数据库中查询出信息数:" + str(len(productInfo)))
 
@@ -145,11 +145,11 @@ def monitoringProduct(request):
         tagsProducts={key: competingProductInfo.objects.filter(tag=key).values_list('productId', flat=True) for key,value in tagsInfo.items() }
         print("tagsInfo",len(tagsInfo),"tagsProducts",len(tagsProducts))
         tagsBestSales={
-            tag: competingProductDailySalesforFiveDays.objects.filter(productId__in=productIds,date=date).order_by('-past1_Sales')[0] for tag, productIds in tagsProducts.items()
+            tag: competingProductDailySalesforFiveDays.objects.filter(productId__in=productIds,date=date).order_by('-past1_Sales')[0] for tag, productIds in tagsProducts.items() if competingProductDailySalesforFiveDays.objects.filter(productId__in=productIds,date=date).count()
         }
 
         tagTables=[]
-        for tag in tagsInfo.keys():
+        for tag in tagsBestSales.keys():
             tagTables.append(
                 {
                     'tag': tag,
@@ -272,8 +272,6 @@ def reloadMonitorTagComment(request):
     else:
         comment=monitorProductTag.objects.filter(tag=tagText).values_list('comment',flat=True)
         return HttpResponse(json.dumps({"comment": comment[0]}))
-
-
 
 
 # 下载类
