@@ -45,13 +45,18 @@ def getRandomAgent():
     return USER_AGENTS[random.randint(0,9)]
 
 def getSession():
-    session=requests.Session()  # 创建session对象s
-    session.get('https://www.aliexpress.com/')  # 获取cookies，并存储于s对象中
     headers={
         'User-Agent': getRandomAgent(),
     }
+    session=requests.Session()  # 创建session对象s
     session.headers.update(headers)
-    return session
+    try:
+        session.get('https://www.aliexpress.com/')  # 获取cookies，并存储于s对象中
+        return session
+    except :
+        print("has make some error","time sleep 1 mins.....")
+        time.sleep(60)
+        return getSession()
 
 def download_image(url,file_path):
     #print('正在下载图片', url)

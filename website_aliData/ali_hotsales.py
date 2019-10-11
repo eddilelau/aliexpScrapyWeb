@@ -46,13 +46,18 @@ def getRandomAgent():
     return USER_AGENTS[random.randint(0,9)]
 
 def getSession():
-    session=requests.Session()  # 创建session对象s
-    session.get('https://www.aliexpress.com/')  # 获取cookies，并存储于s对象中
     headers={
         'User-Agent': getRandomAgent(),
     }
+    session=requests.Session()  # 创建session对象s
     session.headers.update(headers)
-    return session
+    try:
+        session.get('https://www.aliexpress.com/')  # 获取cookies，并存储于s对象中
+        return session
+    except :
+        print("has make some error","time sleep 1 mins.....")
+        time.sleep(60)
+        return getSession()
 
 def download_image(url,file_path):
     headers = {
@@ -146,7 +151,7 @@ def fetch_content(product_id,retry_num,session):   #异步函数
             if re.findall('window.runParams = \{\s*data:(.*?),\s*csrfToken', content_gbk, re.S):
                 return parseContent(product_id, content=content)
             else:
-                # print(content_gbk)
+                print(content_gbk)
                 print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),"{}产品没返回正确数据:暂停30s".format(product_id))
                 return product_id
         elif status ==404:
@@ -232,7 +237,7 @@ def parseContent(product_id,content):
     else:
         product_price=data_json["priceModule"]["formatedPrice"]
     if "activityMessage" in data_json["priceModule"].keys():
-        IF_New_User_BONUS=1 if data_json["priceModule"]["activityMessage"] == 'New User BONUS' else 0
+        IF_New_User_BONUS = 1 if data_json["priceModule"]["activityMessage"] == 'New User BONUS' else 0
     else:
         IF_New_User_BONUS=0
     product_Score=data_json["titleModule"]["feedbackRating"]["averageStar"]
@@ -360,6 +365,7 @@ def main(productIdlist):
 if __name__ == '__main__':
     Start_Time = time.time()
     productIdlist = list(competingProductInfo.objects.values_list('productId', flat=True))  # 数据库读取产品ID
+
     main(productIdlist)
     End_Time = time.time()
     Spend_Time = str(round((End_Time - Start_Time) / 60, 2))
