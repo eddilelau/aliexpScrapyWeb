@@ -128,10 +128,10 @@ def updateToCompetingProductDailySalesforFiveDays():
                 sixthCategory=product_summary.sixthCategory,
                 seventhCategory=product_summary.seventhCategory,
                 eigthCategory=product_summary.eigthCategory))
-
-            if past4_Sales<5 and competingProductInfo.objects.filter(productId =product_summary.productId).values_list('tag', flat=True)[0] ==None:
-                print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),"{}热销品近5日销量少于5,从列表中剔除".format(product_summary.productId))
+            if past4_Sales<20 and competingProductInfo.objects.filter(productId =product_summary.productId).values_list('tag', flat=True)[0] ==None:
+                print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),"{}热销品近5日销量少于20,从列表中剔除".format(product_summary.productId))
                 competingProductInfo.objects.filter(productId =product_summary.productId).delete()
+
         if len(bulkInsertData) % 200 == 0:
             competingProductDailySalesforFiveDays.objects.bulk_create(bulkInsertData)
             print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),"开始转换{}个热销品近5日销量到宽表".format(len(bulkInsertData)))
@@ -151,8 +151,9 @@ def fetch_content(product_id,retry_num,session):   #异步函数
             if re.findall('window.runParams = \{\s*data:(.*?),\s*csrfToken', content_gbk, re.S):
                 return parseContent(product_id, content=content)
             else:
-                print(content_gbk)
+                # print(content_gbk)
                 print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),"{}产品没返回正确数据:暂停30s".format(product_id))
+                time.sleep(60*10)
                 return product_id
         elif status ==404:
             print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),"产品ID:{},服务器找不到产品详情,重试{}".format(product_id,retry_num))
@@ -321,6 +322,7 @@ def main(productIdlist):
     session = getSession()
     productInfo=[]
     while productIdlist:
+        time.sleep(2)
         productId=productIdlist.pop(0)  #FIFO
         print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),"开始爬虫{}".format(productId),"等待爬虫产品数据为{}".format(len(productIdlist)))
         result=fetch_content(productId, retry_num=1,session=session)
