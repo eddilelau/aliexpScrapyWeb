@@ -102,11 +102,11 @@ def updateToNewCompetingProductDailySalesforFiveDays():
                 past3_Sales=int(product_summary.totalSales) - past3_data[product_summary.productId]
                 past4_Sales=int(product_summary.totalSales) - past4_data[product_summary.productId]
                 # Eliminate competing product
-                if past4_Sales < 5:
+                if past4_Sales < 10:
                     print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),"{}飙升新品近5日销量少于5,从列表中剔除".format(product_summary.productId))
                     newCompetingProductIdDelete.append(product_summary.productId)
                 # add hot competing product
-                elif past1_Sales>=5 and past2_Sales>=10:
+                elif past1_Sales>=10 and past4_Sales>=20:
                     print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),"{}飙升新品被添加到热卖产品,并从飙升新品列表中删除".format(product_summary.productId))
                     competingProductInfoAdd.add(competingProductInfo(productId=product_summary.productId))
                     newProductIdFiveDayData=newCompetingProductDailySales.objects.filter(date__range=(past4_date, date),productId=product_summary.productId).order_by('-date')
@@ -252,6 +252,7 @@ def fetch_content(product_id,retry_num,session):   #异步函数
             else:
                 # print(content_gbk)
                 print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),"{}产品没返回正确数据:暂停30s".format(product_id))
+                time.sleep(60*10)
                 return product_id
         elif status == 404:
             print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),"产品ID:{},服务器找不到产品详情,重试{}".format(product_id, retry_num))
@@ -362,6 +363,7 @@ def main(productIdlist):
     session = getSession()
     productInfo=[]
     while productIdlist:
+        time.sleep(2)
         productId=productIdlist.pop(0)  #FIFO
         print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),"开始爬虫{}".format(productId),"等待爬虫产品数据为{}".format(len(productIdlist)))
         result=fetch_content(productId, retry_num=1,session=session)
