@@ -61,16 +61,18 @@ def fetch_content(key_word,page,retry_num,session):   #异步函数
             'd':'y',
             'CatId':0,
             'SearchText':key_word,
-            'trafficChannel':'ppc',
+            'trafficChannel':'main',
             'SortType':'default',
-            'g':'n',
-            'page':page
+            'page':page,
+            'Itype':'wholesale',
+            'origin':'y'
         }
         response=session.get(_url,params=data)
         content =response.text.replace("&quot;","\"")    #等待直到获取成功
         status  = response.status_code
         try:
             data_json=json.loads(content)
+            print(data_json)
         except:
             return "json_decode_error"
         if status == 200 and 'items' in data_json:

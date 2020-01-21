@@ -18,7 +18,7 @@ import json
 import pymongo
 from config import *
 import random
-import uvloop
+# import uvloop
 import asyncio,aiohttp
 from pymongo import UpdateOne
 
@@ -138,8 +138,8 @@ def sendEmail(Total_time):
     return ret
 
 def main(scrapyProduct):
-    # loop = asyncio.get_event_loop()
-    loop=uvloop.new_event_loop()  # can not use in windows
+    loop = asyncio.get_event_loop()
+    # loop=uvloop.new_event_loop()  # can not use in windows
     asyncio.set_event_loop(loop)
     tasks = [asyncio.ensure_future(getData(product,try_num= 1)) for product in scrapyProduct]
     loop.run_until_complete(asyncio.wait(tasks))
